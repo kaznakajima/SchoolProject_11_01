@@ -14,7 +14,7 @@ public class SceneFader : MonoBehaviour
     public static string next_Scene;
     public static bool isFade = false;//フェード中かどうか
 
-    public int fade;//FadeIn：１ FadeOut：０
+    int fade;//FadeIn：１ FadeOut：０
 
     Color fadeColor;
 
