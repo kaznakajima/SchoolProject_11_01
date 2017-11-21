@@ -3,26 +3,29 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
-using Unit;
-
-namespace Unit
-{
-    public enum UnitType
-    {
-        Speed,
-        Power,
-        Technique,
-    }
-}
 
 [AddComponentMenu("Scripts//Main_Unit")]
 public class Map_Unit : MonoBehaviour
 {
+    public enum Team
+    {
+        Player1,
+        Player2
+    }
+
+    public enum UnitType
+    {
+        Speed,
+        Power,
+        Technique
+    }
+
     public int x;
     public int z;
     public int moveAmount = 2;
     public int attackRangeMin;
     public int attackRangeMax;
+    public Team team;
 
     [SerializeField]
     int lifeMax;
@@ -36,6 +39,7 @@ public class Map_Unit : MonoBehaviour
 
     int life;
     bool isFocused = false;
+    bool isMoved = false;
 
     public int LifeMax { get { return lifeMax; } }
 
@@ -47,14 +51,38 @@ public class Map_Unit : MonoBehaviour
 
     public Main_Cell Cell { get { return map.GetCell(x, z); } }
 
+    public bool IsMoved
+    {
+        get { return isMoved; }
+        set
+        {
+            isMoved = value;
+            if (isMoved && IsFocused)
+            {
+                OnClick();
+            }
+        }
+    }
+
     void Start()
     {
+        // タグ設定
+        //switch (team)
+        //{
+        //    case Team.Player1:
+        //        gameObject.tag = "Player";
+        //        break;
+        //    case Team.Player2:
+        //        gameObject.tag = "Untagged";
+        //        break;
+        //}
+
         life = lifeMax;
     }
 
     void Update()
     {
-        
+
     }
 
     public void OnClick()
@@ -94,6 +122,14 @@ public class Map_Unit : MonoBehaviour
         life = Mathf.Max(0, life - damage);
 
         Debug.Log("攻撃" + attacker.unitType + "防御"+ defender.unitType + "," +  life + "ダメージ" + damage);
+    }
+
+    public int CalcurateDamageValue(Map_Unit attacker)
+    {
+        // 三つ巴ダメージ実装
+        var unitTypeBouns = new float[] { 1.0f, 2.0f, 0.5f }[(((int)attacker.unitType - (int)unitType) + 3) % 3];
+        int damage = Mathf.RoundToInt(attacker.AttackPower * unitTypeBouns);
+        return damage;
     }
 
     public void DestroyAnimate()

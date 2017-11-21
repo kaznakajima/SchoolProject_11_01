@@ -12,6 +12,8 @@ public class Main_SceneController : MonoBehaviour
     Map_Unit unitPrefab_S;
     [SerializeField]
     Map_Unit unitPrefab_P;
+    [SerializeField]
+    Main_AI enemyAI;
     
     // ヒットしたオブジェクト
     GameObject hitObj;
@@ -35,9 +37,15 @@ public class Main_SceneController : MonoBehaviour
         // GridLayoutによる自動レイアウトで、マスの座標が確定するのをまつ
         yield return null;
         // ユニット配置
-        map.PutUnit(2, 0, unitPrefab);
-        map.PutUnit(4, 0, unitPrefab_S);
-        map.PutUnit(6, 0, unitPrefab_P);
+        map.PutUnit(2, 0, unitPrefab,Map_Unit.Team.Player1);
+        map.PutUnit(4, 0, unitPrefab_S,Map_Unit.Team.Player1);
+        map.PutUnit(6, 0, unitPrefab_P,Map_Unit.Team.Player2);
+
+        // AI設定
+        map.SetAI(Map_Unit.Team.Player2, enemyAI);
+
+        // ターン開始
+        map.StartTurn(Map_Unit.Team.Player1);
     }
 	
 	// Update is called once per frame
@@ -62,9 +70,13 @@ public class Main_SceneController : MonoBehaviour
 
                 rayHit = true;
             }
-            if (hitObj.tag == "Player")
+            if (hitObj.gameObject.tag == "Player")
             {
                 hitObj.GetComponent<Map_Unit>().OnClick();
+            }
+            else
+            {
+                return;
             }
         }
     }

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using Unit;
 
 
 public class Main_Cell : MonoBehaviour
@@ -87,7 +86,7 @@ public class Main_Cell : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetButtonDown("Click"))
         {
             // ワールド座標をスクリーン座標に変換
             mousePos = Vector3.zero;
@@ -116,7 +115,7 @@ public class Main_Cell : MonoBehaviour
         this.z = z;
     }
 
-    void OnClick()
+    public void OnClick()
     {
         if (IsMovable)
         {

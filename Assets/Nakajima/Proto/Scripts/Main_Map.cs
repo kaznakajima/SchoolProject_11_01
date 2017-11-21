@@ -19,6 +19,8 @@ public class Main_Map : MonoBehaviour
     GameObject Battle;
 
     List<Main_Cell> cells = new List<Main_Cell>();
+    Map_Unit.Team currentTeam;
+    Dictionary<Map_Unit.Team, Main_AI> ais = new Dictionary<Map_Unit.Team, Main_AI>();
 
     /// <summary>
     /// 選択中のユニットを返します
@@ -35,6 +37,45 @@ public class Main_Map : MonoBehaviour
         {
             prefab.gameObject.SetActive(false);
         }
+    }
+
+    void Update()
+    {
+        if (Input.GetButtonDown("Click"))
+        {
+            NextTurn();
+        }
+    }
+
+    public void SetAI(Map_Unit.Team team, Main_AI ai)
+    {
+        ai.Initialize(this);
+        ais[team] = ai;
+    }
+
+    public void StartTurn(Map_Unit.Team team)
+    {
+        currentTeam = team;
+        foreach(var unit in unitContainer.GetComponentsInChildren<Map_Unit>())
+        {
+            unit.IsMoved = team != unit.team;
+        }
+
+        if (ais.ContainsKey(team))
+        {
+            var ai = ais[team];
+            ai.Move();
+        }
+        else
+        {
+            Debug.Log("a");
+        }
+    }
+
+    public void NextTurn()
+    {
+        var nextTeam = currentTeam == Map_Unit.Team.Player1 ? Map_Unit.Team.Player2 : Map_Unit.Team.Player1;
+        StartTurn(nextTeam);
     }
 
     /// <summary>
@@ -71,11 +112,104 @@ public class Main_Map : MonoBehaviour
                 cell.gameObject.SetActive(true);
                 cell.transform.SetParent(transform);
                 cell.gameObject.transform.position = new Vector3(x, -0.5f, z);
-                cell.SetCoordinate(x,z);
+                cell.SetCoordinate(x, z);
                 cells.Add(cell);
 
             }
         }
+    }
+
+    /// <summary>
+    /// 指定座標から各マスまで、移動コストいくつで行けるかを計算します
+    /// </summary>
+    /// <param name="from"></param>
+    /// <returns>The move amount to cells.</returns>
+    public List<MoveAmountInfo> GetMoveCostToAllCells(Main_Cell from)
+    {
+        var infos = new List<MoveAmountInfo>();
+        infos.Add(new MoveAmountInfo(from.X, from.Z, 0));
+        int i = 0;
+        while (true)
+        {
+            var appendInfos = new List<MoveAmountInfo>();
+            foreach(var calcTargetInfo in infos.Where(info => info.amount == i))
+            {
+                // 四方のマスの座標配列を作成
+                var calcTargetCoordinate = calcTargetInfo.coordinate;
+                var aroundCellCoordinates = new Coordinate[]
+                {
+                    new Coordinate(calcTargetCoordinate.x - 1,calcTargetCoordinate.z),
+                    new Coordinate(calcTargetCoordinate.x + 1,calcTargetCoordinate.z),
+                    new Coordinate(calcTargetCoordinate.x,calcTargetCoordinate.z - 1),
+                    new Coordinate(calcTargetCoordinate.x,calcTargetCoordinate.z + 1),
+                };
+                // 四方のマスの残移動力を計算
+                foreach(var aroundCellCoordinate in aroundCellCoordinates)
+                {
+                    var targetCell = cells.FirstOrDefault(c => c.X == aroundCellCoordinate.x && c.Z == aroundCellCoordinate.z);
+                    if(targetCell == null ||
+                        infos.Any(info => info.coordinate.x == aroundCellCoordinate.x && info.coordinate.z == aroundCellCoordinate.z) ||
+                        appendInfos.Any(info => info.coordinate.x == aroundCellCoordinate.x && info.coordinate.z == aroundCellCoordinate.z))
+                    {
+                        // マップに存在しない、または既に計算済みの座標はスルー
+                        continue;
+                    }
+                    int remainingMoveAmount = i + targetCell.Cost;
+                    appendInfos.Add(new MoveAmountInfo(aroundCellCoordinate.x, aroundCellCoordinate.z, remainingMoveAmount));
+                }
+            }
+            infos.AddRange(appendInfos);
+
+            i++;
+            if(i > infos.Max(x => x.amount < 999 ? x.amount : 0))
+            {
+                break;
+            }
+        }
+        return infos.Where(x => x.amount < 999).ToList();
+    }
+
+    /// <summary>
+    /// 指定位置までの移動ルートと移動コストを返す
+    /// </summary>
+    /// <param name="from"></param>
+    /// <param name="to"></param>
+    /// <returns>The route coordinates and move amount.</returns>
+    public List<MoveAmountInfo> CalcurateRouteCoordnatesAndMoveAmount(Main_Cell from, Main_Cell to)
+    {
+        var costs = GetMoveCostToAllCells(from);
+        if (!costs.Any(info => info.coordinate.x == to.X && info.coordinate.z == to.Z))
+        {
+            throw new ArgumentException(string.Format("x:{0}, y:{1} is not movable.", to.X, to.Z));
+        }
+
+        var toCost = costs.First(info => info.coordinate.x == to.X && info.coordinate.z == to.Z);
+        var route = new List<MoveAmountInfo>();
+        route.Add(toCost);
+        while (true)
+        {
+            var currentCost = route.Last();
+            var currentCell = cells.First(cell => cell.X == currentCost.coordinate.x && cell.Z == currentCost.coordinate.z);
+            var prevMoveCost = currentCost.amount - currentCell.Cost;
+            var previousCost = costs.FirstOrDefault(info => (Mathf.Abs(info.coordinate.x - currentCell.X) + Mathf.Abs(info.coordinate.z - currentCell.Z)) == 1 && info.amount == prevMoveCost);
+            if(previousCost == null)
+            {
+                break;
+            }
+            route.Add(previousCost);
+        }
+        route.Reverse();
+        return route.ToList();
+    }
+
+    public Main_Cell[] GetAttackableCells()
+    {
+        return cells.Where(x => x.IsAttackable).ToArray();
+    }
+
+    public Main_Cell[] GetMovableCells()
+    {
+        return cells.Where(x => x.IsMovable).ToArray();
     }
 
     /// <summary>
@@ -84,9 +218,18 @@ public class Main_Map : MonoBehaviour
     /// <param name="x"></param>
     /// <param name="z"></param>
     /// <returns></returns>
-    public Main_Cell GetCell(int x,int z)
+    public Main_Cell GetCell(int x, int z)
     {
         return cells.First(c => c.X == x && c.Z == z);
+    }
+
+    public Main_Cell[] GetCellsByDistance(Main_Cell baseCell, int distanceMin, int distanceMax)
+    {
+        return cells.Where(x =>
+        {
+            var distance = Math.Abs(baseCell.X - x.X) + Math.Abs(baseCell.Z - x.Z);
+            return distanceMin <= distance && distance <= distanceMax;
+        }).ToArray();
     }
 
     /// <summary>
@@ -117,20 +260,30 @@ public class Main_Map : MonoBehaviour
     /// <param name="attackRangeMin"></param>
     /// <param name="attackRangeMax"></param>
     /// <returns></returns>
-    public bool HighlightAttackableCells(int x,int z,int attackRangeMin,int attackRangeMax)
+    public bool HighlightAttackableCells(int x, int z, int attackRangeMin, int attackRangeMax)
     {
         var startCell = cells.First(c => c.X == x && c.Z == z);
-        var targetinfo = GetRemainingAccountRangeInfos(startCell, attackRangeMin, attackRangeMax).Where(i =>
-          {
-              var cell = cells.First(c => i.coordinate.x == c.X && i.coordinate.z == c.Z);
-              return null != cell.Unit;
-          });
-        foreach(var info in targetinfo)
+        var hasTarget = false;
+        foreach (var cell in GetCellsByDistance(startCell, attackRangeMin, attackRangeMax))
         {
-            var cell = cells.First(c => c.X == info.coordinate.x && c.Z == info.coordinate.z);
-            cell.IsAttackable = true;
+            if (null != cell.Unit && cell.Unit.team != currentTeam)
+            {
+                hasTarget = true;
+                cell.IsAttackable = true;
+            }
         }
-        return targetinfo.Count() > 0;
+        return hasTarget;
+        //var targetinfo = GetRemainingAccountRangeInfos(startCell, attackRangeMin, attackRangeMax).Where(i =>
+        //  {
+        //      var cell = cells.First(c => i.coordinate.x == c.X && i.coordinate.z == c.Z);
+        //      return null != cell.Unit;
+        //  });
+        //foreach(var info in targetinfo)
+        //{
+        //    var cell = cells.First(c => c.X == info.coordinate.x && c.Z == info.coordinate.z);
+        //    cell.IsAttackable = true;
+        //}
+        //return targetinfo.Count() > 0;
     }
 
     /// <summary>
@@ -142,24 +295,11 @@ public class Main_Map : MonoBehaviour
         {
             if (cell.IsAttackable)
             {
-                
+
             }
             cell.IsMovable = false;
         }
     }
-
-    /// <summary>
-    /// 移動可能なマスのハイライトを消します
-    /// </summary>
-    public void ResetMovableCells()
-    {
-        foreach (var cell in cells.Where(c => c.IsMovable))
-        {
-            cell.IsMovable = false;
-        }
-    }
-
-
 
     /// <summary>
     /// 移動経路となるマスを返す
@@ -202,13 +342,14 @@ public class Main_Map : MonoBehaviour
     /// <param name="x">The x coordinate.</param>
     /// <param name="y">The y coordinate.</param>
     /// <param name="unitPrefab">Unit prefab.</param>
-    public void PutUnit(int x, int z, Map_Unit unitPrefab)
+    public void PutUnit(int x, int z, Map_Unit unitPrefab, Map_Unit.Team team)
     {
         var unit = Instantiate(unitPrefab);
+        unit.team = team;
         unit.gameObject.SetActive(true);
         unit.transform.SetParent(unitContainer);
         //unit.transform.position = cells.First(c => c.X == x && c.Y == y).transform.position;
-        unit.transform.position = new Vector3(x,0.5f,z);
+        unit.transform.position = new Vector3(x, 0.5f, z);
         unit.x = x;
         unit.z = z;
     }
@@ -217,7 +358,7 @@ public class Main_Map : MonoBehaviour
     /// ユニットを対象のマスに移動させます
     /// </summary>
     /// <param name="cell">Cell.</param>
-    public void MoveTo(Map_Unit unit,Main_Cell cell)
+    public void MoveTo(Map_Unit unit, Main_Cell cell)
     {
         //ResetMovableCells();
         ClearHighLight();
@@ -238,13 +379,42 @@ public class Main_Map : MonoBehaviour
         });
     }
 
-    public void AttackTo(Map_Unit fromUnit,Map_Unit toUnit)
+    public void AttackTo(Map_Unit fromUnit, Map_Unit toUnit)
     {
         BattleController.attacker = fromUnit;
         BattleController.defender = toUnit;
         Instantiate(Battle);
         ClearHighLight();
         ActiveUnit.IsFocused = false;
+    }
+
+    /// <summary>
+    /// 自軍のユニットを取得します
+    /// </summary>
+    /// <returns>The own units.</returns>
+    public Map_Unit[] GetOwnUnits()
+    {
+        return unitContainer.GetComponentsInChildren<Map_Unit>().Where(x => x.team == currentTeam).ToArray();
+    }
+
+    /// <summary>
+    /// 敵軍のユニットを取得します
+    /// </summary>
+    /// <returns>The enemy units.</returns>
+    public Map_Unit[] GetEnemyUnits()
+    {
+        return unitContainer.GetComponentsInChildren<Map_Unit>().Where(x => x.team != currentTeam).ToArray();
+    }
+
+    /// <summary>
+    /// 任意の座標にいるユニットの取得
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="z"></param>
+    /// <returns></returns>
+    public Map_Unit GetUnit(int x, int z)
+    {
+        return unitContainer.GetComponentsInChildren<Map_Unit>().FirstOrDefault(u => u.x == x && u.z == z);
     }
 
     /// <summary>
@@ -339,20 +509,9 @@ public class Main_Map : MonoBehaviour
     }
 
     /// <summary>
-    /// 任意の座標にいるユニットの取得
-    /// </summary>
-    /// <param name="x"></param>
-    /// <param name="z"></param>
-    /// <returns></returns>
-    public Map_Unit GetUnit(int x,int z)
-    {
-        return unitContainer.GetComponentsInChildren<Map_Unit>().FirstOrDefault(u => u.x == x && u.z == z);
-    }
-
-    /// <summary>
     /// 残移動力情報クラス
     /// </summary>
-    class MoveAmountInfo
+    public class MoveAmountInfo
     {
         public readonly Coordinate coordinate;
         public readonly int amount;
@@ -360,14 +519,14 @@ public class Main_Map : MonoBehaviour
         public MoveAmountInfo(int x, int z, int amount)
         {
             this.coordinate = new Coordinate(x, z);
-            this.amount = amount;
+            this.amount= amount;
         }
     }
 
     /// <summary>
     /// 座標クラス
     /// </summary>
-    class Coordinate
+    public class Coordinate
     {
         public readonly int x;
         public readonly int z;
