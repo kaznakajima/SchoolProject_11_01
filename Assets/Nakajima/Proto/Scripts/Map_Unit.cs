@@ -95,7 +95,7 @@ public class Map_Unit : MonoBehaviour
         }
 
         // 自分以外が選択状態なら解除
-        if (null != map.ActiveUnit && this != map.ActiveUnit)
+        if (map.ActiveUnit != null && map.ActiveUnit != this)
         {
             map.ActiveUnit.isFocused = false;
             map.ClearHighLight();

@@ -126,6 +126,12 @@ public class Main_AI : MonoBehaviour
         yield return WaitBattleCoroutine();
     }
 
+    /// <summary>
+    /// 移動終了を待つコルーチン
+    /// </summary>
+    /// <param name="unit">Unit.</param>
+    /// <param name="cell">Cell.</param>
+    /// <returns>The move croutine.</returns>
     IEnumerator WaitMoveCoroutine(Map_Unit unit,Main_Cell cell)
     {
         while (true)
@@ -139,6 +145,10 @@ public class Main_AI : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
     }
 
+    /// <summary>
+    /// Battleが終わるまで待つコルーチン
+    /// </summary>
+    /// <returns>The battle coroutine.</returns>
     IEnumerator WaitBattleCoroutine()
     {
         while (true)
@@ -150,6 +160,11 @@ public class Main_AI : MonoBehaviour
         yield return new WaitForSeconds(1.0f);
     }
     
+    /// <summary>
+    /// 敵ユニットに攻撃できるマスを取得させる
+    /// </summary>
+    /// <param name="unit">Unit.</param>
+    /// <returns>The attack base cells.</returns>
     Main_Cell[] GetAttackBaseCells(Map_Unit unit)
     {
         var cells = new List<Main_Cell>();

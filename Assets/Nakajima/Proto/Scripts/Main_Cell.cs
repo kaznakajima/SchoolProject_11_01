@@ -9,8 +9,6 @@ public class Main_Cell : MonoBehaviour
     [SerializeField]
     Main_Map map;
     [SerializeField]
-    GameObject highlight;
-    [SerializeField]
     int cost;
     [SerializeField]
     Material movableColor;
@@ -18,6 +16,8 @@ public class Main_Cell : MonoBehaviour
     Material attackableColor;
     [SerializeField]
     MeshRenderer rangeMesh;
+
+    public GameObject highlight;
 
     int x;
     int z;
@@ -54,7 +54,7 @@ public class Main_Cell : MonoBehaviour
                 rangeMesh.material = movableColor;
                 highlight.tag = "canMove";
             }
-                
+
         }
         get { return highlight.activeSelf; }
     }
@@ -86,7 +86,7 @@ public class Main_Cell : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetButtonDown("Click"))
+        if (Input.GetMouseButtonDown(0))
         {
             // ワールド座標をスクリーン座標に変換
             mousePos = Vector3.zero;
@@ -100,7 +100,10 @@ public class Main_Cell : MonoBehaviour
                 mousePos = hit.collider.gameObject.transform.position;
             }
             if (mousePos == highlight.transform.position && highlight.tag == "canMove")
+            {
                 OnClick();
+            }
+                
         }
     }
 
@@ -119,7 +122,24 @@ public class Main_Cell : MonoBehaviour
     {
         if (IsMovable)
         {
-            map.MoveTo(map.ActiveUnit,this);
+            map.MoveTo(map.ActiveUnit, this);
+        }
+    }
+
+    void OnCollisionStay(Collision collision)
+    {
+        if (collision.gameObject.tag == "Untagged")
+        {
+            cost = 5;
+        }
+    }
+
+    void OnCollisionExit(Collision collision)
+    {
+        if(collision.gameObject.tag == "Untagged")
+        {
+            cost = 1;
         }
     }
 }
+

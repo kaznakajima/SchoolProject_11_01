@@ -18,6 +18,12 @@ public class Main_Map : MonoBehaviour
     [SerializeField]
     GameObject Battle;
 
+    // ユニットの位置
+    Vector3 unitPos;
+
+    // ユニットの向き
+    float unitDir;
+
     List<Main_Cell> cells = new List<Main_Cell>();
     Map_Unit.Team currentTeam;
     Dictionary<Map_Unit.Team, Main_AI> ais = new Dictionary<Map_Unit.Team, Main_AI>();
@@ -41,10 +47,10 @@ public class Main_Map : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetButtonDown("Click"))
-        {
-            NextTurn();
-        }
+        //if (Input.GetButtonDown("Click"))
+        //{
+        //    NextTurn();
+        //}
     }
 
     public void SetAI(Map_Unit.Team team, Main_AI ai)
@@ -68,7 +74,8 @@ public class Main_Map : MonoBehaviour
         }
         else
         {
-            Debug.Log("a");
+            Debug.Log("敵ターン終了");
+            Input_Controller.myTurn = true;
         }
     }
 
@@ -250,6 +257,7 @@ public class Main_Map : MonoBehaviour
                 cells.First(c => c.X == info.coordinate.x && c.Z == info.coordinate.z).IsMovable = true;
             }
         }
+
     }
 
     /// <summary>
@@ -364,9 +372,41 @@ public class Main_Map : MonoBehaviour
         ClearHighLight();
         var routeCells = CalculateRouteCells(unit.x, unit.z, unit.moveAmount, cell);
         var sequence = DOTween.Sequence();
+        unitDir = unit.transform.rotation.y;
+        unitPos = unit.transform.position;
+
         for (int i = 1; i < routeCells.Length; i++)
         {
+            // 現在の位置
             var routeCell = routeCells[i];
+
+            // 前の移動位置
+            var endCell = routeCells[i - 1];
+
+            // 進行方向に向かせる
+            if (routeCell.transform.position.x < endCell.transform.position.x)
+            {
+                sequence.Append(unit.transform.DORotate(new Vector3(unitDir, -90), 0.1f));
+            }
+            else if (routeCell.transform.position.x > endCell.transform.position.x)
+            {
+                sequence.Append(unit.transform.DORotate(new Vector3(unitDir, 90), 0.1f));
+            }
+
+            unitDir = unit.transform.rotation.y;
+
+            if (routeCell.transform.position.z < endCell.transform.position.z)
+            {
+                sequence.Append(unit.transform.DORotate(new Vector3(unitDir, 180), 0.1f));
+            }
+            else if (routeCell.transform.position.z > endCell.transform.position.z)
+            {
+                sequence.Append(unit.transform.DORotate(new Vector3(unitDir, 0), 0.1f));
+            }
+
+            unitDir = unit.transform.rotation.y;
+
+            // 移動実行
             sequence.Append(unit.transform.DOMove(new Vector3(routeCell.transform.position.x, 0.5f, routeCell.transform.position.z), 0.1f).SetEase(Ease.Linear));
         }
         sequence.OnComplete(() =>
@@ -381,8 +421,29 @@ public class Main_Map : MonoBehaviour
 
     public void AttackTo(Map_Unit fromUnit, Map_Unit toUnit)
     {
+        unitDir = fromUnit.transform.rotation.y;
         BattleController.attacker = fromUnit;
         BattleController.defender = toUnit;
+        var sequence = DOTween.Sequence();
+        if(fromUnit.transform.position.x < toUnit.transform.position.x)
+        {
+            sequence.Append(fromUnit.transform.DORotate(new Vector3(unitDir, 90), 0.1f));
+        }
+        else if(fromUnit.transform.position.x > toUnit.transform.position.x)
+        {
+            sequence.Append(fromUnit.transform.DORotate(new Vector3(unitDir, -90),0.1f));
+        }
+
+        unitDir = fromUnit.transform.rotation.y;
+
+        if(fromUnit.transform.position.z < toUnit.transform.position.z)
+        {
+            sequence.Append(fromUnit.transform.DORotate(new Vector3(unitDir, 0), 0.1f));
+        }
+        else if(fromUnit.transform.position.z > toUnit.transform.position.z)
+        {
+            sequence.Append(fromUnit.transform.DORotate(new Vector3(unitDir, 180), 0.1f));
+        }
         Instantiate(Battle);
         ClearHighLight();
         ActiveUnit.IsFocused = false;
