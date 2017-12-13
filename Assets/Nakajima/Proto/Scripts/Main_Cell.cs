@@ -48,7 +48,7 @@ public class Main_Cell : MonoBehaviour
             //rangeMesh = highlight.GetComponent<MeshRenderer>();
             rangeMesh.material = attackableColor;
             highlight.SetActive(value);
-            highlight.tag = "Untagged";
+            highlight.tag = "GameController";
             if (!IsAttackable)
             {
                 rangeMesh.material = movableColor;
@@ -86,6 +86,7 @@ public class Main_Cell : MonoBehaviour
 
     void Update()
     {
+
         if (Input.GetMouseButtonDown(0))
         {
             // ワールド座標をスクリーン座標に変換
@@ -103,7 +104,6 @@ public class Main_Cell : MonoBehaviour
             {
                 OnClick();
             }
-                
         }
     }
 
@@ -136,7 +136,7 @@ public class Main_Cell : MonoBehaviour
 
     void OnCollisionExit(Collision collision)
     {
-        if(collision.gameObject.tag == "Untagged")
+        if (collision.gameObject.tag == "Untagged")
         {
             cost = 1;
         }

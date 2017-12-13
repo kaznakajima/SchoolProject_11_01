@@ -105,8 +105,31 @@ public class Input_Controller : MonoBehaviour
         // ユニットまたは移動先の選択
         if (Input.GetButtonDown("Click"))
         {
-            MoveSelect();
+            if(myTurn == true)
+            {
+                MoveSelect();
+            }
+            else
+            {
+                return;
+            }
+            
         }
+
+        // キャンセル
+        if (Input.GetButtonDown("Cancel"))
+        {
+            if(map.ActiveUnit != null)
+            {
+                map.ActiveUnit.IsFocused = false;
+                map.ClearHighLight();
+            }
+            else
+            {
+                return;
+            }  
+        }
+
         // ターン変更
         if (Input.GetButtonDown("Change"))
         {
@@ -117,8 +140,6 @@ public class Input_Controller : MonoBehaviour
     // ユニット選択、移動先の選択メソッド
     void MoveSelect()
     {
-        // コントローラーの座標
-        Vector3 ConPos = transform.position;
         // Rayのあたった座標
         Vector3 PlayerPos = Vector3.zero;
 
@@ -131,19 +152,20 @@ public class Input_Controller : MonoBehaviour
         {
             if(hit.collider.tag == "Player" || hit.collider.tag == "Untagged")
             {
+                if (hit.collider.tag == "Player")
+                {
+                    isPlayer = true;
+                }
+                else if (hit.collider.tag == "Untagged")
+                {
+                    isPlayer = false;
+                }
                 // Rayが当たったオブジェクトの座標を取得
                 PlayerPos = hit.collider.gameObject.transform.position;
                 hit.collider.gameObject.GetComponent<Map_Unit>().OnClick();
             }
-            if(hit.collider.tag == "Player")
-            {
-                isPlayer = true;
-            }
-            else if(hit.collider.tag == "Untagged")
-            {
-                isPlayer = false;
-            }
-            if(hit.collider.tag == "canMove")
+
+            if (hit.collider.tag == "canMove")
             {
                 if (isPlayer)
                 {

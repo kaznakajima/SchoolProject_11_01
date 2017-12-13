@@ -26,11 +26,10 @@ public class Map_Unit : MonoBehaviour
     public int attackRangeMin;
     public int attackRangeMax;
     public Team team;
+    public int attackPowerBase;
 
     [SerializeField]
     int lifeMax;
-    [SerializeField]
-    int attackPowerBase;
     [SerializeField]
     Main_Map map;
 
@@ -67,15 +66,15 @@ public class Map_Unit : MonoBehaviour
     void Start()
     {
         // タグ設定
-        //switch (team)
-        //{
-        //    case Team.Player1:
-        //        gameObject.tag = "Player";
-        //        break;
-        //    case Team.Player2:
-        //        gameObject.tag = "Untagged";
-        //        break;
-        //}
+        switch (team)
+        {
+            case Team.Player1:
+                gameObject.tag = "Player";
+                break;
+            case Team.Player2:
+                gameObject.tag = "Untagged";
+                break;
+        }
 
         life = lifeMax;
     }
@@ -91,6 +90,7 @@ public class Map_Unit : MonoBehaviour
         if (map.GetCell(x, z).IsAttackable)
         {
             map.AttackTo(map.ActiveUnit, this);
+
             return;
         }
 
@@ -112,6 +112,12 @@ public class Map_Unit : MonoBehaviour
             //map.ResetMovableCells();
             map.ClearHighLight();
         }
+    }
+
+    public void Cancel()
+    {
+        isFocused = false;
+        map.ClearHighLight();
     }
 
     public void Damage(Map_Unit attacker,Map_Unit defender)

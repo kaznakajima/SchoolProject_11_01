@@ -86,6 +86,7 @@ public class Main_AI : MonoBehaviour
         {
             // 自分のいるマスも移動先の選択肢に含める
             movableCells.Add(unit.Cell);
+
             var moveTargetCell = movableCells.OrderByDescending(_cell =>
             {
                 var matchedRoute = route.FirstOrDefault(_route => _route.coordinate.x == _cell.X && _route.coordinate.z == _cell.Z);
@@ -170,7 +171,7 @@ public class Main_AI : MonoBehaviour
         var cells = new List<Main_Cell>();
         foreach(var enemyUnit in map.GetEnemyUnits())
         {
-            cells.AddRange(map.GetCellsByDistance(enemyUnit.Cell, unit.attackRangeMin, unit.attackRangeMax).Where(c => c.Cost < 999));
+            cells.AddRange(map.GetCellsByDistance(enemyUnit.Cell, unit.attackRangeMin, unit.attackRangeMax).Where(c => c.Cost < 5));
         }
         return cells.Distinct().ToArray();
     }    

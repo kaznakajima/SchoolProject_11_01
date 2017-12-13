@@ -42,7 +42,7 @@ public class Main_SceneController : MonoBehaviour
         // ユニット配置
         map.PutUnit(2, 0, unitPrefab,Map_Unit.Team.Player1);
         map.PutUnit(4, 0, unitPrefab_S,Map_Unit.Team.Player1);
-        map.PutUnit(6, 0, unitPrefab_P,Map_Unit.Team.Player2);
+        map.PutUnit(7, 7, unitPrefab_P,Map_Unit.Team.Player2);
 
         // AI設定
         map.SetAI(Map_Unit.Team.Player2, enemyAI);
@@ -76,10 +76,6 @@ public class Main_SceneController : MonoBehaviour
             if (hitObj.gameObject.tag == "Player")
             {
                 hitObj.GetComponent<Map_Unit>().OnClick();
-            }
-            else
-            {
-                return;
             }
         }
     }

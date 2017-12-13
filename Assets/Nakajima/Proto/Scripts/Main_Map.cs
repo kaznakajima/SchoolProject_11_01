@@ -24,7 +24,11 @@ public class Main_Map : MonoBehaviour
     // ユニットの向き
     float unitDir;
 
+    // マスのリスト
     List<Main_Cell> cells = new List<Main_Cell>();
+    // ユニットのリスト
+    List<Map_Unit> units = new List<Map_Unit>();
+
     Map_Unit.Team currentTeam;
     Dictionary<Map_Unit.Team, Main_AI> ais = new Dictionary<Map_Unit.Team, Main_AI>();
 
@@ -303,7 +307,7 @@ public class Main_Map : MonoBehaviour
         {
             if (cell.IsAttackable)
             {
-
+                cell.IsAttackable = false;
             }
             cell.IsMovable = false;
         }
@@ -356,10 +360,10 @@ public class Main_Map : MonoBehaviour
         unit.team = team;
         unit.gameObject.SetActive(true);
         unit.transform.SetParent(unitContainer);
-        //unit.transform.position = cells.First(c => c.X == x && c.Y == y).transform.position;
         unit.transform.position = new Vector3(x, 0.5f, z);
         unit.x = x;
         unit.z = z;
+        units.Add(unit);
     }
 
     /// <summary>
@@ -414,6 +418,10 @@ public class Main_Map : MonoBehaviour
             unit.x = routeCells[routeCells.Length - 1].X;
             unit.z = routeCells[routeCells.Length - 1].Z;
             bool isAttackable = HighlightAttackableCells(unit.x, unit.z, unit.attackRangeMin, unit.attackRangeMax);
+            if(cell.Cost == 1)
+            {
+                PutUnit(unit.x + 1,unit.z,unit,Map_Unit.Team.Player1);
+            }
             if (!isAttackable)
                 unit.IsFocused = false;
         });
@@ -425,6 +433,28 @@ public class Main_Map : MonoBehaviour
         BattleController.attacker = fromUnit;
         BattleController.defender = toUnit;
         var sequence = DOTween.Sequence();
+
+        var unitCoordinates = new Coordinate[]
+        {
+            new Coordinate((int)fromUnit.transform.position.x + 1,(int)fromUnit.transform.position.z),
+            new Coordinate((int)fromUnit.transform.position.x - 1,(int)fromUnit.transform.position.z),
+            new Coordinate((int)fromUnit.transform.position.x,(int)fromUnit.transform.position.z + 1),
+            new Coordinate((int)fromUnit.transform.position.x,(int)fromUnit.transform.position.z - 1)
+        };
+
+        foreach(var aroundUnit in unitCoordinates)
+        {
+            var nextCell = units.FirstOrDefault(c => c.x == aroundUnit.x && c.z == aroundUnit.z);
+            Debug.Log(nextCell);
+            if(nextCell != null)
+            {
+                if(nextCell.gameObject.tag == "Player")
+                {
+                    fromUnit.attackPowerBase *= 2;
+                }
+            }
+        }
+
         if(fromUnit.transform.position.x < toUnit.transform.position.x)
         {
             sequence.Append(fromUnit.transform.DORotate(new Vector3(unitDir, 90), 0.1f));
@@ -444,6 +474,8 @@ public class Main_Map : MonoBehaviour
         {
             sequence.Append(fromUnit.transform.DORotate(new Vector3(unitDir, 180), 0.1f));
         }
+        
+
         Instantiate(Battle);
         ClearHighLight();
         ActiveUnit.IsFocused = false;
