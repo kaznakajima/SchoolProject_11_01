@@ -96,6 +96,7 @@ public class TurnShuffler : MonoBehaviour
         if (shuffleFlg) StartCoroutine(ColorFade(second));
         else {
             t = 0;
+            startColor = Color.white;
             while (t < 1)
             {
                 t += Time.deltaTime / second;

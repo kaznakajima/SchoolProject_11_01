@@ -6,13 +6,15 @@ using UnityEngine.SceneManagement;
 
 public class SceneFader : MonoBehaviour
 {
-    //////////////////////////////////////////////////////////
-    // このscriptはシーン上のCanvasにアタッチしてください。/// 
-    //////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////
+    // このscriptはシーン上のCanvasにアタッチしてください。//
+    /////////////////////////////////////////////////////////
 
     float red, green, blue; //RGBを操作するための変数
     public static string next_Scene;
     public static bool isFade = false;//フェード中かどうか
+
+    public float fadeTime = 1;
 
     int fade;//FadeIn：１ FadeOut：０
 
@@ -21,7 +23,7 @@ public class SceneFader : MonoBehaviour
     void Start()
     {
        fade = 0;
-        StartCoroutine(SceneFade(1.5f, false));
+        StartCoroutine(SceneFade(fadeTime, false));
     }
 
     /// <summary>
@@ -35,7 +37,7 @@ public class SceneFader : MonoBehaviour
             isFade = true;
             next_Scene = nextSceneName;
             fade = 1;
-            StartCoroutine(SceneFade(1.5f,true));
+            StartCoroutine(SceneFade(fadeTime,true));
         }
     }
 
