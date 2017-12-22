@@ -6,11 +6,17 @@ using UnityEngine.UI;
 public class VolumeProgram : MonoBehaviour {
     public static bool SliderMoveStart = false;//スライダーの最初
     public static bool SlideMove = false;//スライダーの移動
-   
+
+    bool sliderOn;
+    float speed=1;
+    public float volumePoint =0.1f;
+
     [SerializeField]
     Slider VolumeSlider;//音量のスライダー
 
     public static Slider Volume;//音量
+
+    float span;
 
     [SerializeField]
     GameObject VolumeSliderEnd;//スライダーの移動終了場所
@@ -26,6 +32,7 @@ public class VolumeProgram : MonoBehaviour {
     public static bool BarMove = false;//音量のバー移動
     void Start()
     {
+        sliderOn = false;
         StartPos = VolumeSlider.GetComponent<RectTransform>().anchoredPosition;//最初の位置を基点にして取得する
         EndPos = VolumeSliderEnd.GetComponent<RectTransform>().anchoredPosition;//最後の位置を基点にして取得する
 
@@ -166,4 +173,34 @@ public class VolumeProgram : MonoBehaviour {
             }
         }
     }
+
+     void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Z))
+        {
+            sliderOn = !sliderOn;
+            VolumeButtonClicked();
+        }
+
+        if (sliderOn)
+        {
+            span = Input.GetAxis("Horizontal") * speed;
+
+            if (span > 0)
+            {
+                speed = 0;
+                Volume.value += volumePoint;
+            }
+            else if (span < 0)
+            {
+                speed = 0;
+                Volume.value -= volumePoint;
+            }
+            if (Input.GetAxis("Horizontal") == 0)
+            {
+                speed = 1;
+            }
+        }
+    }
+
 }

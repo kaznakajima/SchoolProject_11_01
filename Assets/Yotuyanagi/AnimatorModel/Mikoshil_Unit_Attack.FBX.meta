@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: ef328cdfaabe718458c669c9eb48ba12
-timeCreated: 1513766597
+guid: 25e6151360dea88418e394308abfa61d
+timeCreated: 1513849191
 licenseType: Free
 ModelImporter:
   serializedVersion: 19
@@ -179,8 +179,9 @@ ModelImporter:
     100342: Mikoshi_Handhelper002
     100344: Mikoshi_Handhelper003
     100346: Mikoshi_Handhelper004
-    100348: //RootNode
-    100350: Particle View 001
+    100348: Mikoshi_Move on_001
+    100350: //RootNode
+    100352: Particle View 001
     400000: Bip001
     400002: Bip001 Footsteps
     400004: Bip001 Head
@@ -355,36 +356,40 @@ ModelImporter:
     400342: Mikoshi_Handhelper002
     400344: Mikoshi_Handhelper003
     400346: Mikoshi_Handhelper004
-    400348: //RootNode
-    400350: Particle View 001
+    400348: Mikoshi_Move on_001
+    400350: //RootNode
+    400352: Particle View 001
     2300000: Box012
     2300002: Box021
     2300004: Box022
     2300006: Box023
     2300008: Mikoshi
+    2300010: Mikoshi_Move on_001
     3300000: Box012
     3300002: Box021
     3300004: Box022
     3300006: Box023
     3300008: Mikoshi
+    3300010: Mikoshi_Move on_001
     4300000: happi
-    4300002: Mikoshi
-    4300004: hidariasi001
-    4300006: karada001
-    4300008: migiasi001
-    4300010: Box021
-    4300012: hidariasi002
-    4300014: karada002
-    4300016: migiasi002
-    4300018: Box022
-    4300020: hidariasi003
-    4300022: karada003
-    4300024: migiasi003
-    4300026: Box023
-    4300028: Box012
-    4300030: hidariasi
-    4300032: karada
-    4300034: migiasi
+    4300002: Mikoshi_Move on_001
+    4300004: Box012
+    4300006: hidariasi
+    4300008: karada
+    4300010: migiasi
+    4300012: hidariasi003
+    4300014: karada003
+    4300016: migiasi003
+    4300018: Box023
+    4300020: hidariasi002
+    4300022: karada002
+    4300024: migiasi002
+    4300026: Box022
+    4300028: hidariasi001
+    4300030: karada001
+    4300032: migiasi001
+    4300034: Box021
+    4300036: Mikoshi
     7400000: Take 001
     9500000: //RootNode
     13700000: happi
