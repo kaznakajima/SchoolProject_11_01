@@ -41,6 +41,10 @@ public class Main_Cell : MonoBehaviour
         get { return highlight.activeSelf; }
     }
 
+    /// <summary>
+    /// 攻撃可能なマスかどうか
+    /// </summary>
+    /// /// <value><c>true</c> if this instance is attackale; otherwise, <c>false</c>.</value>
     public bool IsAttackable
     {
         set
@@ -59,6 +63,19 @@ public class Main_Cell : MonoBehaviour
         get { return highlight.activeSelf; }
     }
 
+    // 神輿がいるかどうか
+    public bool onMikoshi
+    {
+        set
+        {
+            IsMovable = false;
+            IsAttackable = true;
+        }
+        get
+        { return highlight.activeSelf; }
+    }
+
+    // マスの移動コスト
     public int Cost
     {
         get { return cost; }
@@ -86,29 +103,56 @@ public class Main_Cell : MonoBehaviour
 
     void Update()
     {
-
-        if (Input.GetMouseButtonDown(0))
+        // 通り抜け防止(味方は可能)
+        if(Unit != null)
         {
-            // ワールド座標をスクリーン座標に変換
-            mousePos = Vector3.zero;
-
-            // マウスの位置からRayを飛ばす
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit = new RaycastHit();
-            if (Physics.Raycast(ray, out hit))
+            if(Input_Controller.myTurn == true)
             {
-                // Rayが当たったオブジェクトの座標を取得
-                mousePos = hit.collider.gameObject.transform.position;
+                if (Unit.tag == "Untagged")
+                    cost = 5;
+                else
+                    cost = 1;
             }
-            if (mousePos == highlight.transform.position && highlight.tag == "canMove")
+            else
             {
-                OnClick();
+                if (Unit.tag == "Player")
+                    cost = 5;
+                else
+                    cost = 1;
+            }
+
+            if(Unit.unitType == Map_Unit.UnitType.Mikoshi)
+            {
+                var StartCell = new Main_Map.Coordinate[] 
+                {
+
+                };
+
             }
         }
+
+        //if (Input.GetMouseButtonDown(0))
+        //{
+        //    // ワールド座標をスクリーン座標に変換
+        //    mousePos = Vector3.zero;
+
+        //    // マウスの位置からRayを飛ばす
+        //    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        //    RaycastHit hit = new RaycastHit();
+        //    if (Physics.Raycast(ray, out hit))
+        //    {
+        //        // Rayが当たったオブジェクトの座標を取得
+        //        mousePos = hit.collider.gameObject.transform.position;
+        //    }
+        //    if (mousePos == highlight.transform.position && highlight.tag == "canMove")
+        //    {
+        //        OnClick();
+        //    }
+        //}
     }
 
     /// <summary>
-    /// 座標をセットします
+    /// 座標をセット
     /// </summary>
     /// <param name="x">The x coordinate.</param>
     /// <param name="y">The y coordinate.</param>
@@ -123,22 +167,6 @@ public class Main_Cell : MonoBehaviour
         if (IsMovable)
         {
             map.MoveTo(map.ActiveUnit, this);
-        }
-    }
-
-    void OnCollisionStay(Collision collision)
-    {
-        if (collision.gameObject.tag == "Untagged")
-        {
-            cost = 5;
-        }
-    }
-
-    void OnCollisionExit(Collision collision)
-    {
-        if (collision.gameObject.tag == "Untagged")
-        {
-            cost = 1;
         }
     }
 }

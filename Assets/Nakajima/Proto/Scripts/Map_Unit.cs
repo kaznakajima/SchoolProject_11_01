@@ -7,6 +7,7 @@ using DG.Tweening;
 [AddComponentMenu("Scripts//Main_Unit")]
 public class Map_Unit : MonoBehaviour
 {
+
     public enum Team
     {
         Player1,
@@ -16,7 +17,7 @@ public class Map_Unit : MonoBehaviour
     public enum UnitType
     {
         Speed,
-        Power,
+        Mikoshi,
         Technique
     }
 
@@ -27,6 +28,7 @@ public class Map_Unit : MonoBehaviour
     public int attackRangeMax;
     public Team team;
     public int attackPowerBase;
+    public int unitAtk;
 
     [SerializeField]
     int lifeMax;
@@ -35,6 +37,8 @@ public class Map_Unit : MonoBehaviour
 
     // ユニットのタイプ
     public UnitType unitType;
+    // ユニットの数
+    public int myTeamUnit;
 
     int life;
     bool isFocused = false;
@@ -44,12 +48,15 @@ public class Map_Unit : MonoBehaviour
 
     public int Life { get { return life; } }
 
-    public int AttackPower { get { return Mathf.RoundToInt(attackPowerBase * (Mathf.Ceil((float)life / (float)lifeMax * 10.0f) / 10.0f)); } }
+    public int AttackPower { get { return Mathf.RoundToInt(attackPowerBase + unitAtk * (Mathf.Ceil((float)life / (float)lifeMax * 10.0f) / 10.0f)); } }
 
+    // ユニットが選択状態かどうか
     public bool IsFocused { get { return isFocused;} set { isFocused = value; } }
 
+    // ユニットのいるマスの座標
     public Main_Cell Cell { get { return map.GetCell(x, z); } }
 
+    // ユニットが動いたかどうか
     public bool IsMoved
     {
         get { return isMoved; }
@@ -81,11 +88,12 @@ public class Map_Unit : MonoBehaviour
 
     void Update()
     {
-
+        
     }
 
     public void OnClick()
     {
+
         //攻撃対象の選択中なら攻撃実行
         if (map.GetCell(x, z).IsAttackable)
         {
@@ -94,23 +102,26 @@ public class Map_Unit : MonoBehaviour
             return;
         }
 
-        // 自分以外が選択状態なら解除
-        if (map.ActiveUnit != null && map.ActiveUnit != this)
+        if (isMoved == false)
         {
-            map.ActiveUnit.isFocused = false;
-            map.ClearHighLight();
-        }
+            // 自分以外が選択状態なら解除
+            if (map.ActiveUnit != null && map.ActiveUnit != this)
+            {
+                map.ActiveUnit.isFocused = false;
+                map.ClearHighLight();
+            }
 
-        isFocused = !isFocused;
-        if (isFocused)
-        {
-            map.HighlightMovableCells(x, z, moveAmount);
-            map.HighlightAttackableCells(x, z, attackRangeMin, attackRangeMax);
-        }
-        else
-        {
-            //map.ResetMovableCells();
-            map.ClearHighLight();
+            isFocused = !isFocused;
+            if (isFocused)
+            {
+                map.HighlightMovableCells(x, z, moveAmount);
+                map.HighlightAttackableCells(x, z, attackRangeMin, attackRangeMax);
+            }
+            else
+            {
+                //map.ResetMovableCells();
+                map.ClearHighLight();
+            }
         }
     }
 
@@ -127,7 +138,7 @@ public class Map_Unit : MonoBehaviour
         int damage = Mathf.RoundToInt(attacker.AttackPower * unitTypeBonus);
         life = Mathf.Max(0, life - damage);
 
-        Debug.Log("攻撃" + attacker.unitType + "防御"+ defender.unitType + "," +  life + "ダメージ" + damage);
+        Debug.LogFormat("攻撃" + attacker.unitType + " 防御"+ defender.unitType + "," + "ダメージ" + damage);
     }
 
     public int CalcurateDamageValue(Map_Unit attacker)

@@ -16,10 +16,9 @@ public class Main_Map : MonoBehaviour
     [SerializeField]
     Transform unitContainer;
     [SerializeField]
+    GameObject mikoshi_Action;
+    [SerializeField]
     GameObject Battle;
-
-    // ユニットの位置
-    Vector3 unitPos;
 
     // ユニットの向き
     float unitDir;
@@ -27,7 +26,7 @@ public class Main_Map : MonoBehaviour
     // マスのリスト
     List<Main_Cell> cells = new List<Main_Cell>();
     // ユニットのリスト
-    List<Map_Unit> units = new List<Map_Unit>();
+    public List<Map_Unit> units = new List<Map_Unit>();
 
     Map_Unit.Team currentTeam;
     Dictionary<Map_Unit.Team, Main_AI> ais = new Dictionary<Map_Unit.Team, Main_AI>();
@@ -78,7 +77,7 @@ public class Main_Map : MonoBehaviour
         }
         else
         {
-            Debug.Log("敵ターン終了");
+            Debug.LogFormat("敵ターン終了");
             Input_Controller.myTurn = true;
         }
     }
@@ -131,7 +130,7 @@ public class Main_Map : MonoBehaviour
     }
 
     /// <summary>
-    /// 指定座標から各マスまで、移動コストいくつで行けるかを計算します
+    /// 指定座標から各マスまで、移動コストいくつで行けるかを計算
     /// </summary>
     /// <param name="from"></param>
     /// <returns>The move amount to cells.</returns>
@@ -244,21 +243,64 @@ public class Main_Map : MonoBehaviour
     }
 
     /// <summary>
-    /// 移動可能なマスをハイライトします
+    /// 移動可能なマスをハイライトする
     /// </summary>
     /// <param name="x">The x coordinate.</param>
     /// <param name="y">The y coordinate.</param>
     /// <param name="moveAmount">Move amount.</param>
     public void HighlightMovableCells(int x, int z, int moveAmount)
-    {
-        //ResetMovableCells();
+    { 
         var startCell = cells.First(c => c.X == x && c.Z == z);
         foreach (var info in GetRemainingMoveAmountInfos(startCell, moveAmount))
         {
             var cell = cells.First(c => c.X == info.coordinate.x && c.Z == info.coordinate.z);
-            if (cell.Unit == null)
+            if(cell.Unit == null)
             {
                 cells.First(c => c.X == info.coordinate.x && c.Z == info.coordinate.z).IsMovable = true;
+
+                var mikoshiCell = new Coordinate[] 
+                {
+                    new Coordinate(cell.X + 1,cell.Z),
+                    new Coordinate(cell.X,cell.Z + 1),
+                    new Coordinate(cell.X + 1,cell.Z - 1),
+                    new Coordinate(cell.X + 1,cell.Z + 1),
+                    new Coordinate(cell.X - 1,cell.Z),
+                    new Coordinate(cell.X,cell.Z - 1),
+                    new Coordinate(cell.X - 1,cell.Z + 1),
+                    new Coordinate(cell.X - 1,cell.Z - 1)
+                };
+
+                foreach(var mikoshiaroundCell in mikoshiCell)
+                {
+                    var mikoshiOnCell = units.FirstOrDefault(u => u.x == mikoshiaroundCell.x && u.z == mikoshiaroundCell.z);
+                    if(ActiveUnit.unitType == Map_Unit.UnitType.Mikoshi)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        if (mikoshiOnCell != null && mikoshiOnCell.unitType == Map_Unit.UnitType.Mikoshi)
+                        {
+                            cells.First(c => c.X == info.coordinate.x && c.Z == info.coordinate.z).IsMovable = false;
+                        }
+                    } 
+                }
+
+                foreach(var spacearoundCell in mikoshiCell)
+                {
+                    var spaceCell = cells.FirstOrDefault(c => c.X == spacearoundCell.x && c.Z == spacearoundCell.z);
+                    if (ActiveUnit.unitType == Map_Unit.UnitType.Mikoshi)
+                    {
+                        if (spaceCell != null && spaceCell.Cost != 1)
+                        {
+                            cells.First(c => c.X == info.coordinate.x && c.Z == info.coordinate.z).IsMovable = false;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
             }
         }
 
@@ -285,17 +327,6 @@ public class Main_Map : MonoBehaviour
             }
         }
         return hasTarget;
-        //var targetinfo = GetRemainingAccountRangeInfos(startCell, attackRangeMin, attackRangeMax).Where(i =>
-        //  {
-        //      var cell = cells.First(c => i.coordinate.x == c.X && i.coordinate.z == c.Z);
-        //      return null != cell.Unit;
-        //  });
-        //foreach(var info in targetinfo)
-        //{
-        //    var cell = cells.First(c => c.X == info.coordinate.x && c.Z == info.coordinate.z);
-        //    cell.IsAttackable = true;
-        //}
-        //return targetinfo.Count() > 0;
     }
 
     /// <summary>
@@ -360,7 +391,7 @@ public class Main_Map : MonoBehaviour
         unit.team = team;
         unit.gameObject.SetActive(true);
         unit.transform.SetParent(unitContainer);
-        unit.transform.position = new Vector3(x, 0.5f, z);
+        unit.transform.position = new Vector3(x, 0.0f, z);
         unit.x = x;
         unit.z = z;
         units.Add(unit);
@@ -372,12 +403,16 @@ public class Main_Map : MonoBehaviour
     /// <param name="cell">Cell.</param>
     public void MoveTo(Map_Unit unit, Main_Cell cell)
     {
+        // ユニットのアニメーション
+        Animator unitAnim;
+        unitAnim = unit.GetComponent<Animator>();
+        unitAnim.SetBool("Iswalk", true);
+
         //ResetMovableCells();
         ClearHighLight();
         var routeCells = CalculateRouteCells(unit.x, unit.z, unit.moveAmount, cell);
         var sequence = DOTween.Sequence();
         unitDir = unit.transform.rotation.y;
-        unitPos = unit.transform.position;
 
         for (int i = 1; i < routeCells.Length; i++)
         {
@@ -411,27 +446,51 @@ public class Main_Map : MonoBehaviour
             unitDir = unit.transform.rotation.y;
 
             // 移動実行
-            sequence.Append(unit.transform.DOMove(new Vector3(routeCell.transform.position.x, 0.5f, routeCell.transform.position.z), 0.1f).SetEase(Ease.Linear));
+            sequence.Append(unit.transform.DOMove(new Vector3(routeCell.transform.position.x, 0.0f, routeCell.transform.position.z), 0.3f).SetEase(Ease.Linear));
         }
         sequence.OnComplete(() =>
         {
+            unitAnim.SetBool("Iswalk", false);
             unit.x = routeCells[routeCells.Length - 1].X;
             unit.z = routeCells[routeCells.Length - 1].Z;
             bool isAttackable = HighlightAttackableCells(unit.x, unit.z, unit.attackRangeMin, unit.attackRangeMax);
-            if(cell.Cost == 1)
-            {
-                PutUnit(unit.x + 1,unit.z,unit,Map_Unit.Team.Player1);
-            }
+            //if(cell.Cost == 1)
+            //{
+            //    PutUnit(unit.x + 1,unit.z,unit,currentTeam);
+            //}
             if (!isAttackable)
+            {
                 unit.IsFocused = false;
+                unit.IsMoved = true;
+            }
+                
         });
     }
 
     public void AttackTo(Map_Unit fromUnit, Map_Unit toUnit)
     {
+        if(fromUnit.unitType == Map_Unit.UnitType.Mikoshi)
+        {
+            mikoshi_Action.transform.position = new Vector3(fromUnit.transform.position.x, -0.05f, fromUnit.transform.position.z);
+            mikoshi_Action.SetActive(true);
+        }
+        else
+        {
+            // ユニットのアニメーション
+            Animator unitAnim;
+            unitAnim = fromUnit.GetComponent<Animator>();
+            unitAnim.SetTrigger("Isattack");
+        }
+
+        // 敵ユニットのアニメーション
+        Animator enemyAnim;
+        enemyAnim = toUnit.GetComponent<Animator>();
+        enemyAnim.SetTrigger("Isdamage");
+
         unitDir = fromUnit.transform.rotation.y;
         BattleController.attacker = fromUnit;
         BattleController.defender = toUnit;
+        BattleController.mikoshi_Action = mikoshi_Action;
         var sequence = DOTween.Sequence();
 
         var unitCoordinates = new Coordinate[]
@@ -445,12 +504,11 @@ public class Main_Map : MonoBehaviour
         foreach(var aroundUnit in unitCoordinates)
         {
             var nextCell = units.FirstOrDefault(c => c.x == aroundUnit.x && c.z == aroundUnit.z);
-            Debug.Log(nextCell);
             if(nextCell != null)
             {
-                if(nextCell.gameObject.tag == "Player")
+                if(nextCell.team == fromUnit.team)
                 {
-                    fromUnit.attackPowerBase *= 2;
+                    fromUnit.unitAtk += 1;
                 }
             }
         }
@@ -458,10 +516,18 @@ public class Main_Map : MonoBehaviour
         if(fromUnit.transform.position.x < toUnit.transform.position.x)
         {
             sequence.Append(fromUnit.transform.DORotate(new Vector3(unitDir, 90), 0.1f));
+            if (fromUnit.unitType == Map_Unit.UnitType.Mikoshi)
+            {
+                sequence.Append(mikoshi_Action.transform.DORotate(new Vector3(unitDir, 90), 0.1f));
+            }
         }
         else if(fromUnit.transform.position.x > toUnit.transform.position.x)
         {
             sequence.Append(fromUnit.transform.DORotate(new Vector3(unitDir, -90),0.1f));
+            if (fromUnit.unitType == Map_Unit.UnitType.Mikoshi)
+            {
+                sequence.Append(mikoshi_Action.transform.DORotate(new Vector3(unitDir, -90), 0.1f));
+            }
         }
 
         unitDir = fromUnit.transform.rotation.y;
@@ -469,16 +535,28 @@ public class Main_Map : MonoBehaviour
         if(fromUnit.transform.position.z < toUnit.transform.position.z)
         {
             sequence.Append(fromUnit.transform.DORotate(new Vector3(unitDir, 0), 0.1f));
+            if (fromUnit.unitType == Map_Unit.UnitType.Mikoshi)
+            {
+                sequence.Append(mikoshi_Action.transform.DORotate(new Vector3(unitDir, 0), 0.1f));
+            }
         }
         else if(fromUnit.transform.position.z > toUnit.transform.position.z)
         {
             sequence.Append(fromUnit.transform.DORotate(new Vector3(unitDir, 180), 0.1f));
+            if (fromUnit.unitType == Map_Unit.UnitType.Mikoshi)
+            {
+                sequence.Append(mikoshi_Action.transform.DORotate(new Vector3(unitDir, 180), 0.1f));
+            }
         }
-        
 
         Instantiate(Battle);
         ClearHighLight();
         ActiveUnit.IsFocused = false;
+        if (fromUnit.unitType == Map_Unit.UnitType.Mikoshi)
+        {
+            fromUnit.gameObject.SetActive(false);
+        }
+        fromUnit.unitAtk = 0;
     }
 
     /// <summary>
@@ -511,7 +589,7 @@ public class Main_Map : MonoBehaviour
     }
 
     /// <summary>
-    /// 移動力を元に移動可能範囲の計算を行います
+    /// 移動力を元に移動可能範囲の計算
     /// </summary>
     /// <returns>The remaining move amount infos.</returns>
     /// <param name="startCell">Start cell.</param>
@@ -611,7 +689,7 @@ public class Main_Map : MonoBehaviour
 
         public MoveAmountInfo(int x, int z, int amount)
         {
-            this.coordinate = new Coordinate(x, z);
+            coordinate = new Coordinate(x, z);
             this.amount= amount;
         }
     }

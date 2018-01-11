@@ -31,7 +31,23 @@ public class Main_AI : MonoBehaviour
         // 行動可能なユニット取得
         var OwnUnits = map.GetOwnUnits().OrderByDescending(x => x.Life);
         var enemyUnits = map.GetEnemyUnits();
-        if(OwnUnits.Min(owUnit => enemyUnits.Min(enUnit => Mathf.Abs(owUnit.x - enUnit.x) + Mathf.Abs(owUnit.z - enUnit.z))) <= distance)
+
+        Debug.Log(OwnUnits.Min(owUnit => enemyUnits.Min(enUnit => Mathf.Abs(owUnit.x - enUnit.x) + Mathf.Abs(owUnit.z - enUnit.z))));
+
+        if (OwnUnits.Min(owUnit => enemyUnits.Min(enUnit => Mathf.Abs(owUnit.x - enUnit.x) + Mathf.Abs(owUnit.z - enUnit.z))) == 1)
+        {
+            // 敵ユニット(プレイヤー)が隣接していたなら攻撃
+            foreach (var unit in OwnUnits)
+            {
+                map.HighlightAttackableCells(unit.x, unit.z, unit.attackRangeMin, unit.attackRangeMax);
+                unit.IsFocused = !unit.IsFocused;
+                unit.IsMoved = true;
+                // ユニット選択
+                unit.OnClick();
+                yield return AttackIfPossibleCoroutine(unit);
+            }
+        }
+        else if (OwnUnits.Min(owUnit => enemyUnits.Min(enUnit => Mathf.Abs(owUnit.x - enUnit.x) + Mathf.Abs(owUnit.z - enUnit.z))) <= distance)
         {
             // 敵ユニット(プレイヤー)が指定距離以内に入ったら行動開始
             foreach(var unit in OwnUnits)
@@ -39,13 +55,14 @@ public class Main_AI : MonoBehaviour
                 yield return MoveAndAttackCoroutne(unit); 
             }
         }
-        yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.5f);
         // 全ての動作が完了したらターン終了
         map.NextTurn();
     }
 
     IEnumerator MoveAndAttackCoroutne(Map_Unit unit)
     {
+
         // 移動可能な全てのマスまでの移動コストを取得
         var moveCosts = map.GetMoveCostToAllCells(unit.Cell);
 
@@ -70,7 +87,8 @@ public class Main_AI : MonoBehaviour
 
         var route = map.CalcurateRouteCoordnatesAndMoveAmount(unit.Cell, TargetCell);
         var movableCells = map.GetMovableCells().ToList();
-        if(movableCells.Count == 0)
+
+        if (movableCells.Count == 0)
         {
             yield return AttackIfPossibleCoroutine(unit);
             if (!unit.IsMoved)
@@ -93,7 +111,8 @@ public class Main_AI : MonoBehaviour
                 return (null != matchedRoute ? matchedRoute.amount : 0);
             }).First();
 
-            if(moveTargetCell != unit.Cell)
+
+            if (moveTargetCell != unit.Cell)
             {
                 yield return new WaitForSeconds(0.5f);
                 moveTargetCell.OnClick();
@@ -107,9 +126,10 @@ public class Main_AI : MonoBehaviour
     IEnumerator AttackIfPossibleCoroutine(Map_Unit unit)
     {
         var attackableCells = map.GetAttackableCells();
+        Debug.Log(attackableCells.Length);
         if(0 < attackableCells.Length)
         {
-            if(Random.Range(0,100) < randomAttack)
+            if (Random.Range(0, 100) < randomAttack)
             {
                 // ランダムで対象を選ぶ
                 attackableCells[Random.Range(0, attackableCells.Length)].Unit.OnClick();
@@ -171,7 +191,7 @@ public class Main_AI : MonoBehaviour
         var cells = new List<Main_Cell>();
         foreach(var enemyUnit in map.GetEnemyUnits())
         {
-            cells.AddRange(map.GetCellsByDistance(enemyUnit.Cell, unit.attackRangeMin, unit.attackRangeMax).Where(c => c.Cost < 5));
+            cells.AddRange(map.GetCellsByDistance(enemyUnit.Cell, unit.attackRangeMin, unit.attackRangeMax).Where(c => c.Cost < 999));
         }
         return cells.Distinct().ToArray();
     }    

@@ -36,18 +36,6 @@ public class Input_Controller : MonoBehaviour
         inputVec.x = Input.GetAxisRaw("Horizontal");
         inputVec.z = Input.GetAxisRaw("Vertical");
 
-        //// 移動量の計算
-        //float moveX = Input.GetAxisRaw("XRange") * moveSpeed;
-        //float moveZ = Input.GetAxisRaw("ZRange") * moveSpeed;
-
-        //// 入力判定
-        //Vector3 inputVec;
-        //inputVec.x = Input.GetAxisRaw("XRange");
-        //inputVec.z = Input.GetAxisRaw("ZRange");
-
-        //Debug.Log(moveX);
-        //Debug.Log(moveZ);
-
         if (moveX != 0)
         {
             moveZ = 0;
