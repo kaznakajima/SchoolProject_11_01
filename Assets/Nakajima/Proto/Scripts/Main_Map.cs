@@ -18,10 +18,13 @@ public class Main_Map : MonoBehaviour
     [SerializeField]
     GameObject mikoshi_Action;
     [SerializeField]
+    GameObject mikoshi_Damage;
+    [SerializeField]
     GameObject Battle;
 
-    // ユニットの向き
+    // 自ユニット・敵ユニットの向き
     float unitDir;
+    float e_unitDir;
 
     // マスのリスト
     List<Main_Cell> cells = new List<Main_Cell>();
@@ -106,25 +109,12 @@ public class Main_Map : MonoBehaviour
         {
             for (int x = 0; x < width; x++)
             {
-                int rand = UnityEngine.Random.Range(0, 10);
-                if (rand == 0)
-                {
-                    cell = Instantiate(cellRockPrefab);
-                }
-                else if (rand <= 2)
-                {
-                    cell = Instantiate(cellForestPrefab);
-                }
-                else
-                {
-                    cell = Instantiate(cellFieldPrefab);
-                }
+                cell = Instantiate(cellFieldPrefab);
                 cell.gameObject.SetActive(true);
                 cell.transform.SetParent(transform);
                 cell.gameObject.transform.position = new Vector3(x, -0.5f, z);
                 cell.SetCoordinate(x, z);
                 cells.Add(cell);
-
             }
         }
     }
@@ -272,25 +262,10 @@ public class Main_Map : MonoBehaviour
 
                 foreach(var mikoshiaroundCell in mikoshiCell)
                 {
-                    var mikoshiOnCell = units.FirstOrDefault(u => u.x == mikoshiaroundCell.x && u.z == mikoshiaroundCell.z);
+                    
                     if(ActiveUnit.unitType == Map_Unit.UnitType.Mikoshi)
                     {
-                        break;
-                    }
-                    else
-                    {
-                        if (mikoshiOnCell != null && mikoshiOnCell.unitType == Map_Unit.UnitType.Mikoshi)
-                        {
-                            cells.First(c => c.X == info.coordinate.x && c.Z == info.coordinate.z).IsMovable = false;
-                        }
-                    } 
-                }
-
-                foreach(var spacearoundCell in mikoshiCell)
-                {
-                    var spaceCell = cells.FirstOrDefault(c => c.X == spacearoundCell.x && c.Z == spacearoundCell.z);
-                    if (ActiveUnit.unitType == Map_Unit.UnitType.Mikoshi)
-                    {
+                        var spaceCell = cells.FirstOrDefault(c => c.X == mikoshiaroundCell.x && c.Z == mikoshiaroundCell.z);
                         if (spaceCell != null && spaceCell.Cost != 1)
                         {
                             cells.First(c => c.X == info.coordinate.x && c.Z == info.coordinate.z).IsMovable = false;
@@ -298,8 +273,12 @@ public class Main_Map : MonoBehaviour
                     }
                     else
                     {
-                        break;
-                    }
+                        var mikoshiOnCell = units.FirstOrDefault(u => u.x == mikoshiaroundCell.x && u.z == mikoshiaroundCell.z);
+                        if (mikoshiOnCell != null && mikoshiOnCell.unitType == Map_Unit.UnitType.Mikoshi)
+                        {
+                            cells.First(c => c.X == info.coordinate.x && c.Z == info.coordinate.z).IsMovable = false;
+                        }
+                    } 
                 }
             }
         }
@@ -482,15 +461,25 @@ public class Main_Map : MonoBehaviour
             unitAnim.SetTrigger("Isattack");
         }
 
-        // 敵ユニットのアニメーション
-        Animator enemyAnim;
-        enemyAnim = toUnit.GetComponent<Animator>();
-        enemyAnim.SetTrigger("Isdamage");
+        if(toUnit.unitType == Map_Unit.UnitType.Mikoshi)
+        {
+            mikoshi_Damage.transform.position = new Vector3(toUnit.transform.position.x, -0.05f, toUnit.z);
+            mikoshi_Damage.SetActive(true);
+        }
+        else
+        {
+            // 敵ユニットのアニメーション
+            Animator enemyAnim;
+            enemyAnim = toUnit.GetComponent<Animator>();
+            enemyAnim.SetTrigger("Isdamage");
+        }
 
         unitDir = fromUnit.transform.rotation.y;
+        e_unitDir = toUnit.transform.rotation.y;
         BattleController.attacker = fromUnit;
         BattleController.defender = toUnit;
         BattleController.mikoshi_Action = mikoshi_Action;
+        BattleController.mikoshi_Damage = mikoshi_Damage;
         var sequence = DOTween.Sequence();
 
         var unitCoordinates = new Coordinate[]
@@ -516,6 +505,7 @@ public class Main_Map : MonoBehaviour
         if(fromUnit.transform.position.x < toUnit.transform.position.x)
         {
             sequence.Append(fromUnit.transform.DORotate(new Vector3(unitDir, 90), 0.1f));
+            sequence.Append(mikoshi_Damage.transform.DORotate(new Vector3(e_unitDir, -90), 0.1f));
             if (fromUnit.unitType == Map_Unit.UnitType.Mikoshi)
             {
                 sequence.Append(mikoshi_Action.transform.DORotate(new Vector3(unitDir, 90), 0.1f));
@@ -524,6 +514,7 @@ public class Main_Map : MonoBehaviour
         else if(fromUnit.transform.position.x > toUnit.transform.position.x)
         {
             sequence.Append(fromUnit.transform.DORotate(new Vector3(unitDir, -90),0.1f));
+            sequence.Append(mikoshi_Damage.transform.DORotate(new Vector3(e_unitDir, 90), 0.1f));
             if (fromUnit.unitType == Map_Unit.UnitType.Mikoshi)
             {
                 sequence.Append(mikoshi_Action.transform.DORotate(new Vector3(unitDir, -90), 0.1f));
@@ -531,10 +522,12 @@ public class Main_Map : MonoBehaviour
         }
 
         unitDir = fromUnit.transform.rotation.y;
+        e_unitDir = toUnit.transform.rotation.y;
 
         if(fromUnit.transform.position.z < toUnit.transform.position.z)
         {
             sequence.Append(fromUnit.transform.DORotate(new Vector3(unitDir, 0), 0.1f));
+            sequence.Append(mikoshi_Damage.transform.DORotate(new Vector3(e_unitDir, 180), 0.1f));
             if (fromUnit.unitType == Map_Unit.UnitType.Mikoshi)
             {
                 sequence.Append(mikoshi_Action.transform.DORotate(new Vector3(unitDir, 0), 0.1f));
@@ -543,6 +536,7 @@ public class Main_Map : MonoBehaviour
         else if(fromUnit.transform.position.z > toUnit.transform.position.z)
         {
             sequence.Append(fromUnit.transform.DORotate(new Vector3(unitDir, 180), 0.1f));
+            sequence.Append(mikoshi_Damage.transform.DORotate(new Vector3(e_unitDir, 0), 0.1f));
             if (fromUnit.unitType == Map_Unit.UnitType.Mikoshi)
             {
                 sequence.Append(mikoshi_Action.transform.DORotate(new Vector3(unitDir, 180), 0.1f));
@@ -555,6 +549,10 @@ public class Main_Map : MonoBehaviour
         if (fromUnit.unitType == Map_Unit.UnitType.Mikoshi)
         {
             fromUnit.gameObject.SetActive(false);
+        }
+        if(toUnit.unitType == Map_Unit.UnitType.Mikoshi)
+        {
+            toUnit.gameObject.SetActive(false);
         }
         fromUnit.unitAtk = 0;
     }

@@ -43,7 +43,7 @@ public class Input_Controller : MonoBehaviour
             // 右移動
             if (moveX > 0 && moveZ == 0)
             {
-                if (transform.position.x + 1 < Main_SceneController.mapSize)
+                if (transform.position.x + 1 < Main_SceneController.mapSizeX)
                 {
                     transform.position += new Vector3(1, 0, 0);
                     moveSpeed = 0;
@@ -67,7 +67,7 @@ public class Input_Controller : MonoBehaviour
             // 上移動
             if (moveZ < 0 && moveX == 0)
             {
-                if (transform.position.z + 1 < Main_SceneController.mapSize)
+                if (transform.position.z + 1 < Main_SceneController.mapSizeZ)
                 {
                     transform.position += new Vector3(0, 0, 1);
                     moveSpeed = 0;

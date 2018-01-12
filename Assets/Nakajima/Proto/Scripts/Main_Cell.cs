@@ -19,6 +19,8 @@ public class Main_Cell : MonoBehaviour
 
     public GameObject highlight;
 
+    Vector3 point;
+
     int x;
     int z;
 
@@ -52,7 +54,7 @@ public class Main_Cell : MonoBehaviour
             //rangeMesh = highlight.GetComponent<MeshRenderer>();
             rangeMesh.material = attackableColor;
             highlight.SetActive(value);
-            highlight.tag = "GameController";
+            highlight.tag = "Untagged";
             if (!IsAttackable)
             {
                 rangeMesh.material = movableColor;
@@ -61,18 +63,6 @@ public class Main_Cell : MonoBehaviour
 
         }
         get { return highlight.activeSelf; }
-    }
-
-    // 神輿がいるかどうか
-    public bool onMikoshi
-    {
-        set
-        {
-            IsMovable = false;
-            IsAttackable = true;
-        }
-        get
-        { return highlight.activeSelf; }
     }
 
     // マスの移動コスト
@@ -120,15 +110,6 @@ public class Main_Cell : MonoBehaviour
                 else
                     cost = 1;
             }
-
-            if(Unit.unitType == Map_Unit.UnitType.Mikoshi)
-            {
-                var StartCell = new Main_Map.Coordinate[] 
-                {
-
-                };
-
-            }
         }
 
         //if (Input.GetMouseButtonDown(0))
@@ -167,6 +148,14 @@ public class Main_Cell : MonoBehaviour
         if (IsMovable)
         {
             map.MoveTo(map.ActiveUnit, this);
+        }
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        if(collision.gameObject.tag == "GameController")
+        {
+            cost = 5;
         }
     }
 }

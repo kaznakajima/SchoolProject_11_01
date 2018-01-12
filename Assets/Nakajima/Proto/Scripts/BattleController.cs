@@ -7,6 +7,7 @@ public class BattleController : MonoBehaviour
     public static Map_Unit attacker;
     public static Map_Unit defender;
     public static GameObject mikoshi_Action;
+    public static GameObject mikoshi_Damage;
 
     // Use this for initialization
     IEnumerator Start()
@@ -28,7 +29,9 @@ public class BattleController : MonoBehaviour
         }
 
         mikoshi_Action.SetActive(false);
+        mikoshi_Damage.SetActive(false);
         attacker.gameObject.SetActive(true);
+        defender.gameObject.SetActive(true);
         Destroy(gameObject);
     }
 

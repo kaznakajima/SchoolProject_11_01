@@ -7,11 +7,11 @@ public class Main_AI : MonoBehaviour
 {
     // 攻撃選択のランダム性
     [SerializeField, Range(0, 100)]
-    int randomAttack = 50;
+    int randomAttack;
 
     // 検知距離(これ以上近づいたら攻撃)
     [SerializeField, Range(0, 100)]
-    int distance = 4;
+    int distance;
 
     Main_Map map;
 
