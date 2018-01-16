@@ -23,9 +23,11 @@ public class TutorialSlide : MonoBehaviour {
     // Use this for initialization
     void Start () {
         firstTutorialImage.sprite = slideImageSprite[0];//初期画像を一枚目に設定する
-        if (slideSizeIsScreenSize) { slideImageSize = new Vector2(Screen.width, Screen.height); }//画面サイズに合わせる
+        secondTutorialImage.sprite = slideImageSprite[0];//初期画像を一枚目に設定する
+        if (slideSizeIsScreenSize) { slideImageSize = new Vector2(Screen.width,Screen.height); }//画面サイズに合わせる
         if (slidePositionIsCenter) { slidePosition = Vector2.zero; }//移動位置を画面中央に設定
         firstTutorialImage.rectTransform.localPosition = slidePosition;//設定された位置に移動する
+        secondTutorialImage.rectTransform.localPosition = slidePosition;//設定された位置に移動する
         firstTutorialImage.rectTransform.sizeDelta = slideImageSize;//設定されたスライドのサイズに調節する
         secondTutorialImage.rectTransform.sizeDelta = slideImageSize;//二枚目も同様にスライドのサイズを調整する
         isSlide = false;//スライドしていない状態にセットする
