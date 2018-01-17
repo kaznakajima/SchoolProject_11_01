@@ -32,9 +32,7 @@ public class Main_AI : MonoBehaviour
         var OwnUnits = map.GetOwnUnits().OrderByDescending(x => x.Life);
         var enemyUnits = map.GetEnemyUnits();
 
-        Debug.Log(OwnUnits.Min(owUnit => enemyUnits.Min(enUnit => Mathf.Abs(owUnit.x - enUnit.x) + Mathf.Abs(owUnit.z - enUnit.z))));
-
-        if (OwnUnits.Min(owUnit => enemyUnits.Min(enUnit => Mathf.Abs(owUnit.x - enUnit.x) + Mathf.Abs(owUnit.z - enUnit.z))) == 1)
+        if (OwnUnits.Min(owUnit => enemyUnits.Min(enUnit => Mathf.Abs(owUnit.x - enUnit.x) + Mathf.Abs(owUnit.z - enUnit.z))) <= 2)
         {
             // 敵ユニット(プレイヤー)が隣接していたなら攻撃
             foreach (var unit in OwnUnits)
@@ -126,7 +124,6 @@ public class Main_AI : MonoBehaviour
     IEnumerator AttackIfPossibleCoroutine(Map_Unit unit)
     {
         var attackableCells = map.GetAttackableCells();
-        Debug.Log(attackableCells.Length);
         if(0 < attackableCells.Length)
         {
             if (Random.Range(0, 100) < randomAttack)

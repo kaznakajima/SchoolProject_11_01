@@ -7,11 +7,11 @@ public class Main_SceneController : MonoBehaviour
     [SerializeField]
     Main_Map map;
     [SerializeField]
-    Map_Unit unitPrefab;
-    [SerializeField]
     Map_Unit unitPrefab_S;
     [SerializeField]
-    Map_Unit unitPrefab_P;
+    Map_Unit unitPrefab_M;
+    [SerializeField]
+    Map_Unit unitPrefab_T;
     [SerializeField]
     Main_AI enemyAI;
 
@@ -32,18 +32,21 @@ public class Main_SceneController : MonoBehaviour
     {
         //unitPrefab.gameObject.SetActive(false);
 
-        unitPrefab.gameObject.SetActive(false);
         unitPrefab_S.gameObject.SetActive(false);
-        unitPrefab_P.gameObject.SetActive(false);
+        unitPrefab_M.gameObject.SetActive(false);
+        unitPrefab_T.gameObject.SetActive(false);
 
         // マップ生成
         map.Generate(mapSizeZ,mapSizeX);
         // GridLayoutによる自動レイアウトで、マスの座標が確定するのをまつ
         yield return null;
         // ユニット配置
-        map.PutUnit(2, 2, unitPrefab,Map_Unit.Team.Player1);
-        map.PutUnit(4, 2, unitPrefab_S,Map_Unit.Team.Player1);
-        map.PutUnit(10, 7, unitPrefab_P,Map_Unit.Team.Player2);
+        map.PutUnit(2, 2, unitPrefab_S,Map_Unit.Team.Player1);
+        map.PutUnit(4, 2, unitPrefab_M,Map_Unit.Team.Player1);
+        map.PutUnit(6, 2, unitPrefab_T,Map_Unit.Team.Player1);
+        map.PutUnit(10, 10, unitPrefab_S, Map_Unit.Team.Player2);
+        map.PutUnit(12, 10, unitPrefab_M, Map_Unit.Team.Player2);
+        map.PutUnit(14, 10, unitPrefab_T, Map_Unit.Team.Player2);
 
         // AI設定
         map.SetAI(Map_Unit.Team.Player2, enemyAI);

@@ -9,7 +9,7 @@ public class Main_Cell : MonoBehaviour
     [SerializeField]
     Main_Map map;
     [SerializeField]
-    int cost;
+    public int cost;
     [SerializeField]
     Material movableColor;
     [SerializeField]
@@ -18,8 +18,6 @@ public class Main_Cell : MonoBehaviour
     MeshRenderer rangeMesh;
 
     public GameObject highlight;
-
-    Vector3 point;
 
     int x;
     int z;
@@ -93,24 +91,24 @@ public class Main_Cell : MonoBehaviour
 
     void Update()
     {
-        // 通り抜け防止(味方は可能)
-        if(Unit != null)
-        {
-            if(Input_Controller.myTurn == true)
-            {
-                if (Unit.tag == "Untagged")
-                    cost = 5;
-                else
-                    cost = 1;
-            }
-            else
-            {
-                if (Unit.tag == "Player")
-                    cost = 5;
-                else
-                    cost = 1;
-            }
-        }
+        //// 通り抜け防止(味方は可能)
+        //if(Unit != null)
+        //{
+        //    if(Input_Controller.myTurn == true)
+        //    {
+        //        if (Unit.tag == "Untagged")
+        //            cost = 5;
+        //        else
+        //            cost = 1;
+        //    }
+        //    else
+        //    {
+        //        if (Unit.tag == "Player")
+        //            cost = 5;
+        //        else
+        //            cost = 1;
+        //    }
+        //}
 
         //if (Input.GetMouseButtonDown(0))
         //{

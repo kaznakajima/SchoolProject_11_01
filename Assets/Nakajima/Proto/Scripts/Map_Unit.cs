@@ -153,6 +153,18 @@ public class Map_Unit : MonoBehaviour
     {
         transform.DOScale(Vector3.zero, 0.5f).OnComplete(() =>
         {
+            switch (team)
+            {
+                case Team.Player1:
+                    map.myUnitOriginNum--;
+                    break;
+                case Team.Player2:
+                    map.eUnitOriginNum--;
+                    break;
+            }
+
+            map.GetCell(x, z).cost = 1;
+
             Destroy(gameObject);
         });
     }

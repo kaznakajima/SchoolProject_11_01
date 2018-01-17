@@ -26,6 +26,12 @@ public class Main_Map : MonoBehaviour
     float unitDir;
     float e_unitDir;
 
+    //自ユニット・敵ユニットの数
+    public int myUnitOriginNum;
+    public int eUnitOriginNum;
+    int myUnitNum;
+    int eUnitNum;
+
     // マスのリスト
     List<Main_Cell> cells = new List<Main_Cell>();
     // ユニットのリスト
@@ -68,11 +74,39 @@ public class Main_Map : MonoBehaviour
     public void StartTurn(Map_Unit.Team team)
     {
         currentTeam = team;
+
+        // 移動可能なユニットの計算
+        switch (team)
+        {
+            case Map_Unit.Team.Player1:
+                myUnitNum = myUnitOriginNum;
+                break;
+            case Map_Unit.Team.Player2:
+                eUnitNum = eUnitOriginNum;
+                break;
+        }
+
+        // 敵のすり抜け防止
+        foreach(var cell in cells)
+        {
+            // 敵のいる位置のマスは移動不可能
+            if(cell.Unit != null && cell.Unit.team != currentTeam)
+            {
+                cell.cost = 5;
+            }
+            // 敵じゃなければ移動可能
+            else if(cell.Unit != null && cell.Unit.team == currentTeam)
+            {
+                cell.cost = 1;
+            }
+        }
+
         foreach(var unit in unitContainer.GetComponentsInChildren<Map_Unit>())
         {
             unit.IsMoved = team != unit.team;
         }
 
+        // 敵の行動開始(ボタン)
         if (ais.ContainsKey(team))
         {
             var ai = ais[team];
@@ -98,11 +132,6 @@ public class Main_Map : MonoBehaviour
     /// <param name="height">Height.</param>
     public void Generate(int width, int height)
     {
-        //foreach (var cell in cells)
-        //{
-        //    Destroy(cell.gameObject);
-        //}
-
         Main_Cell cell;
 
         for (int z = 0; z < height; z++)
@@ -128,11 +157,11 @@ public class Main_Map : MonoBehaviour
     {
         var infos = new List<MoveAmountInfo>();
         infos.Add(new MoveAmountInfo(from.X, from.Z, 0));
-        int i = 0;
+        int countCell = 0;
         while (true)
         {
             var appendInfos = new List<MoveAmountInfo>();
-            foreach(var calcTargetInfo in infos.Where(info => info.amount == i))
+            foreach(var calcTargetInfo in infos.Where(info => info.amount == countCell))
             {
                 // 四方のマスの座標配列を作成
                 var calcTargetCoordinate = calcTargetInfo.coordinate;
@@ -154,14 +183,14 @@ public class Main_Map : MonoBehaviour
                         // マップに存在しない、または既に計算済みの座標はスルー
                         continue;
                     }
-                    int remainingMoveAmount = i + targetCell.Cost;
+                    int remainingMoveAmount = countCell + targetCell.Cost;
                     appendInfos.Add(new MoveAmountInfo(aroundCellCoordinate.x, aroundCellCoordinate.z, remainingMoveAmount));
                 }
             }
             infos.AddRange(appendInfos);
 
-            i++;
-            if(i > infos.Max(x => x.amount < 999 ? x.amount : 0))
+            countCell++;
+            if(countCell > infos.Max(x => x.amount < 999 ? x.amount : 0))
             {
                 break;
             }
@@ -248,37 +277,101 @@ public class Main_Map : MonoBehaviour
             {
                 cells.First(c => c.X == info.coordinate.x && c.Z == info.coordinate.z).IsMovable = true;
 
-                var mikoshiCell = new Coordinate[] 
+                if(ActiveUnit.unitType == Map_Unit.UnitType.Mikoshi)
                 {
-                    new Coordinate(cell.X + 1,cell.Z),
-                    new Coordinate(cell.X,cell.Z + 1),
-                    new Coordinate(cell.X + 1,cell.Z - 1),
-                    new Coordinate(cell.X + 1,cell.Z + 1),
-                    new Coordinate(cell.X - 1,cell.Z),
-                    new Coordinate(cell.X,cell.Z - 1),
-                    new Coordinate(cell.X - 1,cell.Z + 1),
-                    new Coordinate(cell.X - 1,cell.Z - 1)
-                };
+                    // 移動先のまわりの座標
+                    var mikoshiUnitCell = new Coordinate[]
+                    {
+                        new Coordinate(cell.X + 1,cell.Z),
+                        new Coordinate(cell.X,cell.Z + 1),
+                        new Coordinate(cell.X + 1,cell.Z - 1),
+                        new Coordinate(cell.X + 1,cell.Z + 1),
+                        new Coordinate(cell.X - 1,cell.Z),
+                        new Coordinate(cell.X,cell.Z - 1),
+                        new Coordinate(cell.X - 1,cell.Z + 1),
+                        new Coordinate(cell.X - 1,cell.Z - 1)
+                    };
+                    // 神輿同士の移動制限
+                    var _mikoshiUnitCell = new Coordinate[]
+                    {
+                        new Coordinate(cell.X + 1,cell.Z),
+                        new Coordinate(cell.X,cell.Z + 1),
+                        new Coordinate(cell.X + 1,cell.Z - 1),
+                        new Coordinate(cell.X + 1,cell.Z + 1),
+                        new Coordinate(cell.X - 1,cell.Z),
+                        new Coordinate(cell.X,cell.Z - 1),
+                        new Coordinate(cell.X - 1,cell.Z + 1),
+                        new Coordinate(cell.X - 1,cell.Z - 1),
+                        new Coordinate(cell.X + 2,cell.Z),
+                        new Coordinate(cell.X,cell.Z + 2),
+                        new Coordinate(cell.X + 2,cell.Z - 2),
+                        new Coordinate(cell.X + 2,cell.Z + 2),
+                        new Coordinate(cell.X - 2,cell.Z),
+                        new Coordinate(cell.X,cell.Z - 2),
+                        new Coordinate(cell.X - 2,cell.Z + 2),
+                        new Coordinate(cell.X - 2,cell.Z - 2)
+                    };
 
-                foreach(var mikoshiaroundCell in mikoshiCell)
-                {
-                    
-                    if(ActiveUnit.unitType == Map_Unit.UnitType.Mikoshi)
+                    // 神輿以外のユニットが神輿に近づきすぎないように制限
+                    foreach (var mikoshiaroundCell in mikoshiUnitCell)
                     {
                         var spaceCell = cells.FirstOrDefault(c => c.X == mikoshiaroundCell.x && c.Z == mikoshiaroundCell.z);
-                        if (spaceCell != null && spaceCell.Cost != 1)
+
+                        // マスにユニットがいる場合実行
+                        if (spaceCell.Unit != null)
+                        {
+                            if (spaceCell.Unit.unitType != Map_Unit.UnitType.Mikoshi)
+                            {
+                                cells.First(c => c.X == info.coordinate.x && c.Z == info.coordinate.z).IsMovable = false;
+                            }
+                        }
+                        else if (spaceCell.Unit == null && spaceCell.Cost != 1)
                         {
                             cells.First(c => c.X == info.coordinate.x && c.Z == info.coordinate.z).IsMovable = false;
                         }
                     }
-                    else
+
+                    // 神輿同士が近づきすぎないように制限
+                    foreach (var mikoshiaroundCell in _mikoshiUnitCell)
+                    {
+                        var spaceCell = cells.FirstOrDefault(c => c.X == mikoshiaroundCell.x && c.Z == mikoshiaroundCell.z);
+
+                        // マスにユニットがいる場合に実行
+                        if (spaceCell.Unit != null)
+                        {
+                            if (spaceCell.Unit != ActiveUnit && spaceCell.Unit.unitType == Map_Unit.UnitType.Mikoshi)
+                            {
+                                cells.First(c => c.X == info.coordinate.x && c.Z == info.coordinate.z).IsMovable = false;
+                            }
+                        }
+                    }
+                }
+                else if(ActiveUnit.unitType != Map_Unit.UnitType.Mikoshi)
+                {
+                    // 移動先のまわりの座標
+                    var nomalUnitCell = new Coordinate[]
+                    {
+                         new Coordinate(cell.X + 1,cell.Z),
+                         new Coordinate(cell.X,cell.Z + 1),
+                         new Coordinate(cell.X + 1,cell.Z - 1),
+                         new Coordinate(cell.X + 1,cell.Z + 1),
+                         new Coordinate(cell.X - 1,cell.Z),
+                         new Coordinate(cell.X,cell.Z - 1),
+                         new Coordinate(cell.X - 1,cell.Z + 1),
+                         new Coordinate(cell.X - 1,cell.Z - 1)
+                    };
+
+                    // 神輿に近づきすぎないように制限
+                    foreach (var mikoshiaroundCell in nomalUnitCell)
                     {
                         var mikoshiOnCell = units.FirstOrDefault(u => u.x == mikoshiaroundCell.x && u.z == mikoshiaroundCell.z);
+
+                        // ユニットがいる場合実行
                         if (mikoshiOnCell != null && mikoshiOnCell.unitType == Map_Unit.UnitType.Mikoshi)
                         {
                             cells.First(c => c.X == info.coordinate.x && c.Z == info.coordinate.z).IsMovable = false;
                         }
-                    } 
+                    }
                 }
             }
         }
@@ -296,10 +389,64 @@ public class Main_Map : MonoBehaviour
     public bool HighlightAttackableCells(int x, int z, int attackRangeMin, int attackRangeMax)
     {
         var startCell = cells.First(c => c.X == x && c.Z == z);
+
+        // 神輿が攻撃範囲にいるかの確認
+        if(startCell.Unit.unitType != Map_Unit.UnitType.Mikoshi)
+        {
+            // 2マス先のマス
+            var unitaroundCell = new Coordinate[]
+            {
+                new Coordinate(startCell.X + 2,startCell.Z),
+                new Coordinate(startCell.X - 2,startCell.Z),
+                new Coordinate(startCell.X,startCell.Z + 2),
+                new Coordinate(startCell.X,startCell.Z - 2),
+                new Coordinate(startCell.X + 1,startCell.Z - 1),
+                new Coordinate(startCell.X + 1,startCell.Z + 1),
+                new Coordinate(startCell.X - 1,startCell.Z + 1),
+                new Coordinate(startCell.X - 1,startCell.Z - 1)
+            };
+
+            foreach (var srantCell in unitaroundCell)
+            {
+                var unit = units.FirstOrDefault(u => u.x == srantCell.x && u.z == srantCell.z);
+                // 神輿がいれば攻撃可能
+                if(unit != null && unit.unitType != Map_Unit.UnitType.Mikoshi)
+                {
+                    attackRangeMax = 1;
+                }
+            }
+        }
+
         var hasTarget = false;
+
+        // 神輿同士の攻撃用
+        if (startCell.Unit.unitType == Map_Unit.UnitType.Mikoshi)
+        {
+            var mikoshiaroundCell = new Coordinate[]
+            {
+                new Coordinate(startCell.X + 3,startCell.Z),
+                new Coordinate(startCell.X - 3,startCell.Z),
+                new Coordinate(startCell.X,startCell.Z + 3),
+                new Coordinate(startCell.X,startCell.Z - 3)
+            };
+
+            foreach (var thirdfrontCell in mikoshiaroundCell)
+            {
+                var unit = units.FirstOrDefault(u => u.x == thirdfrontCell.x && u.z == thirdfrontCell.z);
+                // 神輿がいれば攻撃可能
+                if (unit != null && unit.unitType == Map_Unit.UnitType.Mikoshi && unit.team != currentTeam)
+                {
+                    hasTarget = true;
+                    GetCell(unit.x, unit.z).IsAttackable = true;
+                    return hasTarget;
+                }
+            }
+        }
+
+        // 攻撃範囲に敵がいるかの確認
         foreach (var cell in GetCellsByDistance(startCell, attackRangeMin, attackRangeMax))
         {
-            if (null != cell.Unit && cell.Unit.team != currentTeam)
+            if (cell.Unit != null && cell.Unit.team != currentTeam)
             {
                 hasTarget = true;
                 cell.IsAttackable = true;
@@ -334,12 +481,13 @@ public class Main_Map : MonoBehaviour
     {
         var startCell = cells.First(c => c.X == x && c.Z == z);
         var infos = GetRemainingMoveAmountInfos(startCell, moveAmount);
+
+        // 移動できないマスが選択されたら
         if (!infos.Any(info => info.coordinate.x == endCell.X && info.coordinate.z == endCell.Z))
         {
             throw new ArgumentException(string.Format("endCell(x:{0}, y:{1}) is not movable.", endCell.X, endCell.Z));
         }
 
-        //var endCellMoveAmountInfo = infos.First(info => info.coordinate.x == endCell.X && info.coordinate.z == endCell.Z);
         var routeCells = new List<Main_Cell>();
         routeCells.Add(endCell);
         while (true)
@@ -368,6 +516,17 @@ public class Main_Map : MonoBehaviour
     {
         var unit = Instantiate(unitPrefab);
         unit.team = team;
+        switch (unit.team)
+        {
+            case Map_Unit.Team.Player1:
+                myUnitOriginNum++;
+                myUnitNum = myUnitOriginNum;
+                break;
+            case Map_Unit.Team.Player2:
+                eUnitOriginNum++;
+                eUnitNum = eUnitOriginNum;
+                break;
+        }
         unit.gameObject.SetActive(true);
         unit.transform.SetParent(unitContainer);
         unit.transform.position = new Vector3(x, 0.0f, z);
@@ -382,12 +541,11 @@ public class Main_Map : MonoBehaviour
     /// <param name="cell">Cell.</param>
     public void MoveTo(Map_Unit unit, Main_Cell cell)
     {
-        // ユニットのアニメーション
+        // ユニットの移動アニメーション
         Animator unitAnim;
         unitAnim = unit.GetComponent<Animator>();
         unitAnim.SetBool("Iswalk", true);
 
-        //ResetMovableCells();
         ClearHighLight();
         var routeCells = CalculateRouteCells(unit.x, unit.z, unit.moveAmount, cell);
         var sequence = DOTween.Sequence();
@@ -401,7 +559,7 @@ public class Main_Map : MonoBehaviour
             // 前の移動位置
             var endCell = routeCells[i - 1];
 
-            // 進行方向に向かせる
+            // -----------------------進行方向に向かせる----------------------------------------
             if (routeCell.transform.position.x < endCell.transform.position.x)
             {
                 sequence.Append(unit.transform.DORotate(new Vector3(unitDir, -90), 0.1f));
@@ -424,23 +582,47 @@ public class Main_Map : MonoBehaviour
 
             unitDir = unit.transform.rotation.y;
 
+            // ----------------------------------------------------------------------------------
+
             // 移動実行
             sequence.Append(unit.transform.DOMove(new Vector3(routeCell.transform.position.x, 0.0f, routeCell.transform.position.z), 0.3f).SetEase(Ease.Linear));
         }
+
+        // 移動が終了した場合の処理
         sequence.OnComplete(() =>
         {
             unitAnim.SetBool("Iswalk", false);
             unit.x = routeCells[routeCells.Length - 1].X;
             unit.z = routeCells[routeCells.Length - 1].Z;
+
             bool isAttackable = HighlightAttackableCells(unit.x, unit.z, unit.attackRangeMin, unit.attackRangeMax);
             //if(cell.Cost == 1)
             //{
             //    PutUnit(unit.x + 1,unit.z,unit,currentTeam);
             //}
+
+            // 攻撃ができなかったら行動終了
             if (!isAttackable)
             {
                 unit.IsFocused = false;
                 unit.IsMoved = true;
+                switch (unit.team)
+                {
+                    case Map_Unit.Team.Player1:
+                        myUnitNum--;
+                        if(myUnitNum == 0)
+                        {
+                            NextTurn();
+                        }
+                        break;
+                    case Map_Unit.Team.Player2:
+                        eUnitNum--;
+                        if(eUnitNum == 0)
+                        {
+                            NextTurn();
+                        }
+                        break;
+                }
             }
                 
         });
@@ -448,14 +630,16 @@ public class Main_Map : MonoBehaviour
 
     public void AttackTo(Map_Unit fromUnit, Map_Unit toUnit)
     {
+       
         if(fromUnit.unitType == Map_Unit.UnitType.Mikoshi)
         {
+            // 神輿の攻撃アニメーション
             mikoshi_Action.transform.position = new Vector3(fromUnit.transform.position.x, -0.05f, fromUnit.transform.position.z);
             mikoshi_Action.SetActive(true);
         }
         else
         {
-            // ユニットのアニメーション
+            // ユニットの攻撃アニメーション
             Animator unitAnim;
             unitAnim = fromUnit.GetComponent<Animator>();
             unitAnim.SetTrigger("Isattack");
@@ -463,25 +647,30 @@ public class Main_Map : MonoBehaviour
 
         if(toUnit.unitType == Map_Unit.UnitType.Mikoshi)
         {
+            // 神輿のダメージアニメーション
             mikoshi_Damage.transform.position = new Vector3(toUnit.transform.position.x, -0.05f, toUnit.z);
             mikoshi_Damage.SetActive(true);
         }
         else
         {
-            // 敵ユニットのアニメーション
+            // ユニットのダメージアニメーション
             Animator enemyAnim;
             enemyAnim = toUnit.GetComponent<Animator>();
             enemyAnim.SetTrigger("Isdamage");
         }
 
+        // 向きの取得
         unitDir = fromUnit.transform.rotation.y;
         e_unitDir = toUnit.transform.rotation.y;
+
+        // 攻撃と防御の取得
         BattleController.attacker = fromUnit;
         BattleController.defender = toUnit;
         BattleController.mikoshi_Action = mikoshi_Action;
         BattleController.mikoshi_Damage = mikoshi_Damage;
         var sequence = DOTween.Sequence();
 
+        // 隣接しているユニットがいるかの確認用
         var unitCoordinates = new Coordinate[]
         {
             new Coordinate((int)fromUnit.transform.position.x + 1,(int)fromUnit.transform.position.z),
@@ -490,6 +679,7 @@ public class Main_Map : MonoBehaviour
             new Coordinate((int)fromUnit.transform.position.x,(int)fromUnit.transform.position.z - 1)
         };
 
+        // 自ユニットが隣接していたら攻撃力増加
         foreach(var aroundUnit in unitCoordinates)
         {
             var nextCell = units.FirstOrDefault(c => c.x == aroundUnit.x && c.z == aroundUnit.z);
@@ -501,6 +691,8 @@ public class Main_Map : MonoBehaviour
                 }
             }
         }
+
+        // ------------------------------------------------向きの変更-------------------------------------------------------------------
 
         if(fromUnit.transform.position.x < toUnit.transform.position.x)
         {
@@ -543,6 +735,8 @@ public class Main_Map : MonoBehaviour
             }
         }
 
+        // ---------------------------------------------------------------------------------------------------------------------------------
+
         Instantiate(Battle);
         ClearHighLight();
         ActiveUnit.IsFocused = false;
@@ -554,7 +748,30 @@ public class Main_Map : MonoBehaviour
         {
             toUnit.gameObject.SetActive(false);
         }
+
+        // 攻撃力のリセット
         fromUnit.unitAtk = 0;
+
+        // 行動終了
+        switch (fromUnit.team)
+        {
+            case Map_Unit.Team.Player1:
+                myUnitNum--;
+                // 移動可能なユニットがいなかったらターン変更
+                if (myUnitNum == 0)
+                {
+                    NextTurn();
+                }
+                break;
+            case Map_Unit.Team.Player2:
+                eUnitNum--;
+                // 移動可能なユニットがいなかったらターン変更
+                if (eUnitNum == 0)
+                {
+                    NextTurn();
+                }
+                break;
+        }
     }
 
     /// <summary>
