@@ -14,14 +14,16 @@ public class SceneFader : MonoBehaviour
     public static string next_Scene;
     public static bool isFade = false;//フェード中かどうか
 
-    public int fade;//FadeIn：１ FadeOut：０
+    int fade;//FadeIn：１ FadeOut：０
 
     Color fadeColor;
+
+    float fadeSpeed = 1.5f;
 
     void Start()
     {
        fade = 0;
-        StartCoroutine(SceneFade(1.5f, false));
+        StartCoroutine(SceneFade(fadeSpeed, false));
     }
 
     /// <summary>
@@ -35,7 +37,7 @@ public class SceneFader : MonoBehaviour
             isFade = true;
             next_Scene = nextSceneName;
             fade = 1;
-            StartCoroutine(SceneFade(1.5f,true));
+            StartCoroutine(SceneFade(fadeSpeed,true));
         }
     }
 
@@ -84,7 +86,7 @@ public class SceneFader : MonoBehaviour
                 else
                 {
                     fade = 0;
-                    StartCoroutine(SceneFade(1.5f, false));
+                    StartCoroutine(SceneFade(fadeSpeed, false));
                 }
                 break;
             case 0:

@@ -100,13 +100,16 @@ public class ButtonSelectProgram : MonoBehaviour
         switch (buttonNum)
         {
             case 0:
-                ts.Slide(false);//簡易スライドメソッドの呼び出し
+                sf.StageSelect("Title");//フェードメソッドの呼び出し
                 break;
             case 1:
-                ts.Slide(true);
+                ts.Slide(false);//簡易スライドメソッドの呼び出し
                 break;
             case 2:
-                sf.StageSelect("game");//フェードメソッドの呼び出し
+                ts.Slide(true);
+                break;
+            case 3:
+                sf.StageSelect("Game");//フェードメソッドの呼び出し
                 break;
         }
     }
