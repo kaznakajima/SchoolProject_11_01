@@ -291,6 +291,7 @@ public class Main_Map : MonoBehaviour
                         new Coordinate(cell.X - 1,cell.Z + 1),
                         new Coordinate(cell.X - 1,cell.Z - 1)
                     };
+
                     // 神輿同士の移動制限
                     var _mikoshiUnitCell = new Coordinate[]
                     {
@@ -304,12 +305,12 @@ public class Main_Map : MonoBehaviour
                         new Coordinate(cell.X - 1,cell.Z - 1),
                         new Coordinate(cell.X + 2,cell.Z),
                         new Coordinate(cell.X,cell.Z + 2),
-                        new Coordinate(cell.X + 2,cell.Z - 2),
-                        new Coordinate(cell.X + 2,cell.Z + 2),
+                        new Coordinate(cell.X + 1,cell.Z - 2),
+                        new Coordinate(cell.X + 1,cell.Z + 2),
                         new Coordinate(cell.X - 2,cell.Z),
                         new Coordinate(cell.X,cell.Z - 2),
-                        new Coordinate(cell.X - 2,cell.Z + 2),
-                        new Coordinate(cell.X - 2,cell.Z - 2)
+                        new Coordinate(cell.X - 1,cell.Z + 2),
+                        new Coordinate(cell.X - 1,cell.Z - 2)
                     };
 
                     // 神輿以外のユニットが神輿に近づきすぎないように制限
@@ -323,7 +324,7 @@ public class Main_Map : MonoBehaviour
                             if (spaceCell.Unit.unitType != Map_Unit.UnitType.Mikoshi)
                             {
                                 cells.First(c => c.X == info.coordinate.x && c.Z == info.coordinate.z).IsMovable = false;
-                            }
+                            } 
                         }
                         else if (spaceCell.Unit == null && spaceCell.Cost != 1)
                         {
@@ -334,12 +335,12 @@ public class Main_Map : MonoBehaviour
                     // 神輿同士が近づきすぎないように制限
                     foreach (var mikoshiaroundCell in _mikoshiUnitCell)
                     {
-                        var spaceCell = cells.FirstOrDefault(c => c.X == mikoshiaroundCell.x && c.Z == mikoshiaroundCell.z);
+                        var spaceCell = units.FirstOrDefault(c => c.x == mikoshiaroundCell.x && c.z == mikoshiaroundCell.z);
 
                         // マスにユニットがいる場合に実行
-                        if (spaceCell.Unit != null)
+                        if (spaceCell != null)
                         {
-                            if (spaceCell.Unit != ActiveUnit && spaceCell.Unit.unitType == Map_Unit.UnitType.Mikoshi)
+                            if (spaceCell != ActiveUnit && spaceCell.unitType == Map_Unit.UnitType.Mikoshi)
                             {
                                 cells.First(c => c.X == info.coordinate.x && c.Z == info.coordinate.z).IsMovable = false;
                             }
@@ -433,11 +434,14 @@ public class Main_Map : MonoBehaviour
             foreach (var thirdfrontCell in mikoshiaroundCell)
             {
                 var unit = units.FirstOrDefault(u => u.x == thirdfrontCell.x && u.z == thirdfrontCell.z);
+
                 // 神輿がいれば攻撃可能
                 if (unit != null && unit.unitType == Map_Unit.UnitType.Mikoshi && unit.team != currentTeam)
                 {
                     hasTarget = true;
                     GetCell(unit.x, unit.z).IsAttackable = true;
+
+
                     return hasTarget;
                 }
             }
@@ -615,13 +619,13 @@ public class Main_Map : MonoBehaviour
                             NextTurn();
                         }
                         break;
-                    case Map_Unit.Team.Player2:
-                        eUnitNum--;
-                        if(eUnitNum == 0)
-                        {
-                            NextTurn();
-                        }
-                        break;
+                    //case Map_Unit.Team.Player2:
+                    //    eUnitNum--;
+                    //    if(eUnitNum == 0)
+                    //    {
+                    //        NextTurn();
+                    //    }
+                    //    break;
                 }
             }
                 
@@ -648,7 +652,7 @@ public class Main_Map : MonoBehaviour
         if(toUnit.unitType == Map_Unit.UnitType.Mikoshi)
         {
             // 神輿のダメージアニメーション
-            mikoshi_Damage.transform.position = new Vector3(toUnit.transform.position.x, -0.05f, toUnit.z);
+            mikoshi_Damage.transform.position = new Vector3(toUnit.transform.position.x, -0.05f, toUnit.transform.position.z);
             mikoshi_Damage.SetActive(true);
         }
         else

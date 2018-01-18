@@ -17,7 +17,7 @@ public class Main_SceneController : MonoBehaviour
 
     // マップサイズ
     public static int mapSizeX = 20;
-    public static int mapSizeZ = 39;
+    public static int mapSizeZ = 27;
     
     // ヒットしたオブジェクト
     GameObject hitObj;
