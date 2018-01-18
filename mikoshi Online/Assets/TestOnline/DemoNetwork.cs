@@ -2,11 +2,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
 public class DemoNetwork : Photon.MonoBehaviour
 {
+    //プレイヤーＩＤ
+    int playerID;
+    //プレイヤーのステータス
+    public PlayerSt id;
 
     void Start()
     {
+       
         //Photonの入るバージョンの設定。nullがバージョン
         PhotonNetwork.ConnectUsingSettings(null);
     }
@@ -14,7 +20,7 @@ public class DemoNetwork : Photon.MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        
     }
 
     //  ランダムでルームを選び入る
@@ -27,7 +33,10 @@ public class DemoNetwork : Photon.MonoBehaviour
     void OnPhotonRandomJoinFailed()
     {
         //  部屋に入れなかったので自分で作る
-        PhotonNetwork.CreateRoom(null);
+        //　オプション。ここでは入室上限のみ設定
+        RoomOptions roomOptions = new RoomOptions();
+        roomOptions.MaxPlayers = 2;
+        PhotonNetwork.CreateRoom("maching",roomOptions,null);
         Debug.Log("作ったよ");
     }
 
@@ -35,6 +44,8 @@ public class DemoNetwork : Photon.MonoBehaviour
     void OnJoinedRoom()
     {
         Debug.Log("入ったよ");
+        id.PlayerID = PhotonNetwork.playerList.Length;
+
         //  ルームに入っている全員の画面にPlayerを生成する
         //PhotonNetwork.Instantiate("プレイヤーのオブジェクト", this.transform.position, this.transform.rotation, 0);
         GameObject player = PhotonNetwork.Instantiate("Cube", this.transform.position, this.transform.rotation, 0);
