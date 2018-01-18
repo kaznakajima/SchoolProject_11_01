@@ -1,0 +1,21 @@
+fileFormatVersion: 2
+guid: 03a1760876deedf43955d42ea0d9dd4e
+timeCreated: 1513645606
+licenseType: Free
+TrueTypeFontImporter:
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: 07YasashisaAntique
+  fontNames:
+  - 07YasashisaAntique
+  fallbackFontReferences: []
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
