@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class VolumeProgram : MonoBehaviour {
+
     public static bool SliderMoveStart = false;//スライダーの最初
     public static bool SlideMove = false;//スライダーの移動
 
@@ -14,7 +15,7 @@ public class VolumeProgram : MonoBehaviour {
     [SerializeField]
     Slider VolumeSlider;//音量のスライダー
 
-    public static Slider Volume;//音量
+     static Slider Volume;//音量
 
     float span;
 
@@ -30,17 +31,16 @@ public class VolumeProgram : MonoBehaviour {
     public static Vector3 endPos;//スライダーの終了の位置
 
     public static bool BarMove = false;//音量のバー移動
+
     void Start()
     {
+        Volume = VolumeSlider;//変更点を同じにする
         sliderOn = false;
         StartPos = VolumeSlider.GetComponent<RectTransform>().anchoredPosition;//最初の位置を基点にして取得する
         EndPos = VolumeSliderEnd.GetComponent<RectTransform>().anchoredPosition;//最後の位置を基点にして取得する
 
         startPos = StartPos;//最初の位置に同じにする
         endPos = EndPos;//最後の位置に同じにする
-
-        Volume = VolumeSlider;//変更点を同じにする
-
     }
 
     //ボタンを押されたら
@@ -58,15 +58,15 @@ public class VolumeProgram : MonoBehaviour {
     }
 
     //音を変える
-    public static void VolumeChange()
-    {
-        if (!SlideMove)
-        {
-            SliderMoveStart = true;
-            SlideMove = true;
+    //public static void VolumeChange()
+    //{
+    //    if (!SlideMove)
+    //    {
+    //        SliderMoveStart = true;
+    //        SlideMove = true;
 
-        }
-    }
+    //    }
+    //}
 
     //スライダーが移動
     IEnumerator SlideMoving()
