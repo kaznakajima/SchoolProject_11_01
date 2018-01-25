@@ -22,6 +22,19 @@ public class Main_Map : MonoBehaviour
     [SerializeField]
     GameObject Battle;
 
+    // ユニットのタイプ
+    public Map_Unit[] unitPrefab;
+
+    // チーム分け
+    [SerializeField]
+    GameObject Player1P;
+    [SerializeField]
+    GameObject Player2P;
+
+    // マップサイズ
+    int mapX;
+    int mapZ;
+
     // 自ユニット・敵ユニットの向き
     float unitDir;
     float e_unitDir;
@@ -31,6 +44,9 @@ public class Main_Map : MonoBehaviour
     public int eUnitOriginNum;
     int myUnitNum;
     int eUnitNum;
+
+    // お酒の数
+    int liquorCount = 0;
 
     // マスのリスト
     List<Main_Cell> cells = new List<Main_Cell>();
@@ -76,12 +92,32 @@ public class Main_Map : MonoBehaviour
         currentTeam = team;
 
         // 移動可能なユニットの計算
-        switch (team)
+        switch (currentTeam)
         {
             case Map_Unit.Team.Player1:
+                Player1P.SetActive(true);
+                Player2P.SetActive(false);
+                foreach(var myUnit in GetOwnUnits())
+                {
+                    myUnit.tag = "Player";
+                }
+                foreach (var eUnit in GetEnemyUnits())
+                {
+                    eUnit.tag = "Untagged";
+                }
                 myUnitNum = myUnitOriginNum;
                 break;
             case Map_Unit.Team.Player2:
+                Player1P.SetActive(false);
+                Player2P.SetActive(true);
+                foreach (var myUnit in GetOwnUnits())
+                {
+                    myUnit.tag = "Player";
+                }
+                foreach (var eUnit in GetEnemyUnits())
+                {
+                    eUnit.tag = "Untagged";
+                }
                 eUnitNum = eUnitOriginNum;
                 break;
         }
@@ -134,10 +170,13 @@ public class Main_Map : MonoBehaviour
     {
         Main_Cell cell;
 
+        mapX = width;
+        mapZ = height;
+
         for (int z = 0; z < height; z++)
         {
             for (int x = 0; x < width; x++)
-            {
+            {   
                 cell = Instantiate(cellFieldPrefab);
                 cell.gameObject.SetActive(true);
                 cell.transform.SetParent(transform);
@@ -145,6 +184,45 @@ public class Main_Map : MonoBehaviour
                 cell.SetCoordinate(x, z);
                 cells.Add(cell);
             }
+        }
+
+        LiquorGenerate(width, height);
+    }
+
+    /// <summary>
+    /// お酒の生成
+    /// </summary>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    void LiquorGenerate(int width,int height)
+    {
+        for (int i = 0;i < 2;i++)
+        {
+            int isLiquorX = UnityEngine.Random.Range(1, width);
+            int isLiquorZ = UnityEngine.Random.Range(1, height);
+
+            if (GetCell(isLiquorX, isLiquorZ).cost == 1)
+            {
+                GetCell(isLiquorX, isLiquorZ).IsLiquor = true;
+                liquorCount++;
+                GalleryGenerate(width,height);
+            }
+        }
+    }
+
+    /// <summary>
+    /// ギャラリー配置
+    /// </summary>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    void GalleryGenerate(int width, int height)
+    {
+        int isGallaryX = UnityEngine.Random.Range(1, width);
+        int isGallaryZ = UnityEngine.Random.Range(1, height);
+
+        if (GetCell(isGallaryX, isGallaryZ).cost == 1 && GetCell(isGallaryX, isGallaryZ).IsLiquor == false)
+        {
+            GetCell(isGallaryX, isGallaryZ).IsGallary = true;
         }
     }
 
@@ -233,7 +311,7 @@ public class Main_Map : MonoBehaviour
 
     public Main_Cell[] GetAttackableCells()
     {
-        return cells.Where(x => x.IsAttackable).ToArray();
+        return cells.Where(x => x.IsAttackable == true).ToArray();
     }
 
     public Main_Cell[] GetMovableCells()
@@ -391,8 +469,10 @@ public class Main_Map : MonoBehaviour
     {
         var startCell = cells.First(c => c.X == x && c.Z == z);
 
+        var hasTarget = false;
+
         // 神輿が攻撃範囲にいるかの確認
-        if(startCell.Unit.unitType != Map_Unit.UnitType.Mikoshi)
+        if (startCell.Unit.unitType != Map_Unit.UnitType.Mikoshi)
         {
             // 2マス先のマス
             var unitaroundCell = new Coordinate[]
@@ -401,24 +481,27 @@ public class Main_Map : MonoBehaviour
                 new Coordinate(startCell.X - 2,startCell.Z),
                 new Coordinate(startCell.X,startCell.Z + 2),
                 new Coordinate(startCell.X,startCell.Z - 2),
-                new Coordinate(startCell.X + 1,startCell.Z - 1),
-                new Coordinate(startCell.X + 1,startCell.Z + 1),
-                new Coordinate(startCell.X - 1,startCell.Z + 1),
-                new Coordinate(startCell.X - 1,startCell.Z - 1)
+                new Coordinate(startCell.X + 1,startCell.Z - 2),
+                new Coordinate(startCell.X + 1,startCell.Z + 2),
+                new Coordinate(startCell.X - 1,startCell.Z + 2),
+                new Coordinate(startCell.X - 1,startCell.Z - 2)
             };
 
             foreach (var srantCell in unitaroundCell)
             {
                 var unit = units.FirstOrDefault(u => u.x == srantCell.x && u.z == srantCell.z);
                 // 神輿がいれば攻撃可能
-                if(unit != null && unit.unitType != Map_Unit.UnitType.Mikoshi)
+                if(unit != null && unit.unitType == Map_Unit.UnitType.Mikoshi)
                 {
-                    attackRangeMax = 1;
+                    if (unit.team != currentTeam)
+                    {
+                        hasTarget = true;
+                        GetCell(unit.x, unit.z).IsAttackable = true;
+                        unit.attackPoint.SetActive(true);
+                    }
                 }
             }
         }
-
-        var hasTarget = false;
 
         // 神輿同士の攻撃用
         if (startCell.Unit.unitType == Map_Unit.UnitType.Mikoshi)
@@ -440,7 +523,7 @@ public class Main_Map : MonoBehaviour
                 {
                     hasTarget = true;
                     GetCell(unit.x, unit.z).IsAttackable = true;
-
+                    unit.attackPoint.SetActive(true);
 
                     return hasTarget;
                 }
@@ -450,10 +533,11 @@ public class Main_Map : MonoBehaviour
         // 攻撃範囲に敵がいるかの確認
         foreach (var cell in GetCellsByDistance(startCell, attackRangeMin, attackRangeMax))
         {
-            if (cell.Unit != null && cell.Unit.team != currentTeam)
+            if (cell.Unit != null && cell.Unit.team != ActiveUnit.team)
             {
                 hasTarget = true;
                 cell.IsAttackable = true;
+                cell.Unit.attackPoint.SetActive(true);
             }
         }
         return hasTarget;
@@ -469,6 +553,8 @@ public class Main_Map : MonoBehaviour
             if (cell.IsAttackable)
             {
                 cell.IsAttackable = false;
+                if (cell.Unit != null)
+                    cell.Unit.attackPoint.SetActive(false);
             }
             cell.IsMovable = false;
         }
@@ -489,7 +575,8 @@ public class Main_Map : MonoBehaviour
         // 移動できないマスが選択されたら
         if (!infos.Any(info => info.coordinate.x == endCell.X && info.coordinate.z == endCell.Z))
         {
-            throw new ArgumentException(string.Format("endCell(x:{0}, y:{1}) is not movable.", endCell.X, endCell.Z));
+            GetUnit(endCell.X, endCell.Z).OnClick();
+            //throw new ArgumentException(string.Format("endCell(x:{0}, y:{1}) is not movable.", endCell.X, endCell.Z));
         }
 
         var routeCells = new List<Main_Cell>();
@@ -595,9 +682,62 @@ public class Main_Map : MonoBehaviour
         // 移動が終了した場合の処理
         sequence.OnComplete(() =>
         {
+
             unitAnim.SetBool("Iswalk", false);
             unit.x = routeCells[routeCells.Length - 1].X;
             unit.z = routeCells[routeCells.Length - 1].Z;
+
+            // 酒を飲む
+            if (GetCell(unit.x, unit.z).IsLiquor == true)
+            {
+                unitAnim.SetTrigger("IsLiquor");
+                GetCell(unit.x, unit.z).IsLiquor = false;
+                liquorCount--;
+
+                // 酒が無くなったらまた生成
+                if(liquorCount == 0)
+                {
+                    LiquorGenerate(mapX,mapZ);
+                }
+            }
+
+            // ギャラリー生成
+            if(GetCell(unit.x, unit.z).IsGallary == true)
+            {
+                GetCell(unit.x, unit.z).IsGallary = false;
+                int gallaryType = UnityEngine.Random.Range(0, 2);
+                switch (gallaryType)
+                {
+                    case 0:
+                        PutUnit(unit.x, unit.z,unitPrefab[0],currentTeam);
+                        switch (currentTeam)
+                        {
+                            case Map_Unit.Team.Player1:
+                                myUnitOriginNum++;
+                                myUnitNum++;
+                                break;
+                            case Map_Unit.Team.Player2:
+                                eUnitOriginNum++;
+                                eUnitNum++;
+                                break;
+                        }
+                        break;
+                    case 1:
+                        PutUnit(unit.x, unit.z, unitPrefab[1], currentTeam);
+                        switch (currentTeam)
+                        {
+                            case Map_Unit.Team.Player1:
+                                myUnitOriginNum++;
+                                myUnitNum++;
+                                break;
+                            case Map_Unit.Team.Player2:
+                                eUnitOriginNum++;
+                                eUnitNum++;
+                                break;
+                        }
+                        break;
+                }
+            }
 
             bool isAttackable = HighlightAttackableCells(unit.x, unit.z, unit.attackRangeMin, unit.attackRangeMax);
             //if(cell.Cost == 1)
@@ -619,13 +759,13 @@ public class Main_Map : MonoBehaviour
                             NextTurn();
                         }
                         break;
-                    //case Map_Unit.Team.Player2:
-                    //    eUnitNum--;
-                    //    if(eUnitNum == 0)
-                    //    {
-                    //        NextTurn();
-                    //    }
-                    //    break;
+                    case Map_Unit.Team.Player2:
+                        eUnitNum--;
+                        if (eUnitNum == 0)
+                        {
+                            //NextTurn();
+                        }
+                        break;
                 }
             }
                 
@@ -701,6 +841,7 @@ public class Main_Map : MonoBehaviour
         if(fromUnit.transform.position.x < toUnit.transform.position.x)
         {
             sequence.Append(fromUnit.transform.DORotate(new Vector3(unitDir, 90), 0.1f));
+            sequence.Append(toUnit.transform.DORotate(new Vector3(e_unitDir, -90), 0.1f));
             sequence.Append(mikoshi_Damage.transform.DORotate(new Vector3(e_unitDir, -90), 0.1f));
             if (fromUnit.unitType == Map_Unit.UnitType.Mikoshi)
             {
@@ -710,6 +851,7 @@ public class Main_Map : MonoBehaviour
         else if(fromUnit.transform.position.x > toUnit.transform.position.x)
         {
             sequence.Append(fromUnit.transform.DORotate(new Vector3(unitDir, -90),0.1f));
+            sequence.Append(toUnit.transform.DORotate(new Vector3(e_unitDir, 90), 0.1f));
             sequence.Append(mikoshi_Damage.transform.DORotate(new Vector3(e_unitDir, 90), 0.1f));
             if (fromUnit.unitType == Map_Unit.UnitType.Mikoshi)
             {
@@ -723,6 +865,7 @@ public class Main_Map : MonoBehaviour
         if(fromUnit.transform.position.z < toUnit.transform.position.z)
         {
             sequence.Append(fromUnit.transform.DORotate(new Vector3(unitDir, 0), 0.1f));
+            sequence.Append(toUnit.transform.DORotate(new Vector3(e_unitDir, 180), 0.1f));
             sequence.Append(mikoshi_Damage.transform.DORotate(new Vector3(e_unitDir, 180), 0.1f));
             if (fromUnit.unitType == Map_Unit.UnitType.Mikoshi)
             {
@@ -732,6 +875,7 @@ public class Main_Map : MonoBehaviour
         else if(fromUnit.transform.position.z > toUnit.transform.position.z)
         {
             sequence.Append(fromUnit.transform.DORotate(new Vector3(unitDir, 180), 0.1f));
+            sequence.Append(toUnit.transform.DORotate(new Vector3(e_unitDir, 0), 0.1f));
             sequence.Append(mikoshi_Damage.transform.DORotate(new Vector3(e_unitDir, 0), 0.1f));
             if (fromUnit.unitType == Map_Unit.UnitType.Mikoshi)
             {
@@ -769,10 +913,9 @@ public class Main_Map : MonoBehaviour
                 break;
             case Map_Unit.Team.Player2:
                 eUnitNum--;
-                // 移動可能なユニットがいなかったらターン変更
                 if (eUnitNum == 0)
                 {
-                    NextTurn();
+                   // NextTurn();
                 }
                 break;
         }

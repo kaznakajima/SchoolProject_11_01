@@ -4,16 +4,17 @@ using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 
-[AddComponentMenu("Scripts//Main_Unit")]
 public class Map_Unit : MonoBehaviour
 {
 
+    // チーム分け
     public enum Team
     {
         Player1,
         Player2
     }
 
+    // ユニットの種類
     public enum UnitType
     {
         Speed,
@@ -21,15 +22,34 @@ public class Map_Unit : MonoBehaviour
         Technique
     }
 
+    // ユニットの座標
     public int x;
     public int z;
+    
+    // ユニットの移動距離
     public int moveAmount = 2;
+    
+    // ユニットの攻撃範囲
     public int attackRangeMin;
     public int attackRangeMax;
+    
+    // ユニットのチーム
     public Team team;
+
+    // ユニットの攻撃力
     public int attackPowerBase;
     public int unitAtk;
 
+    // ユニットの色分け
+    [SerializeField]
+    SkinnedMeshRenderer unitRen;
+    [SerializeField]
+    Material M_unit;
+
+    // ユニット攻撃の目印
+    public GameObject attackPoint;
+
+    // 最大HP
     [SerializeField]
     int lifeMax;
     [SerializeField]
@@ -40,9 +60,13 @@ public class Map_Unit : MonoBehaviour
     // ユニットの数
     public int myTeamUnit;
 
+    // 現在のHP
     int life;
+
+    // ユニットの選択中かの判断
     bool isFocused = false;
-    bool isMoved = false;
+    // ユニットが動き終わったかどうか
+    public bool isMoved = false;
 
     public int LifeMax { get { return lifeMax; } }
 
@@ -79,7 +103,10 @@ public class Map_Unit : MonoBehaviour
                 gameObject.tag = "Player";
                 break;
             case Team.Player2:
-                gameObject.tag = "Untagged";
+                if(unitType != UnitType.Mikoshi)
+                {
+                    unitRen.material = M_unit;
+                }
                 break;
         }
 
@@ -102,8 +129,10 @@ public class Map_Unit : MonoBehaviour
             return;
         }
 
+
         if (isMoved == false)
         {
+
             // 自分以外が選択状態なら解除
             if (map.ActiveUnit != null && map.ActiveUnit != this)
             {
@@ -164,6 +193,7 @@ public class Map_Unit : MonoBehaviour
             }
 
             map.GetCell(x, z).cost = 1;
+            map.GetCell(x, z).IsAttackable = false;
 
             Destroy(gameObject);
         });

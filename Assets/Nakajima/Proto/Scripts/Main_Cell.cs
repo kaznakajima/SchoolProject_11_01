@@ -7,9 +7,9 @@ using UnityEngine.UI;
 public class Main_Cell : MonoBehaviour
 {
     [SerializeField]
-    Main_Map map;
+    Main_Map map;     // マップの参照
     [SerializeField]
-    public int cost;
+    public int cost;     // マスの移動コスト
     [SerializeField]
     Material movableColor;
     [SerializeField]
@@ -18,6 +18,8 @@ public class Main_Cell : MonoBehaviour
     MeshRenderer rangeMesh;
 
     public GameObject highlight;
+    public GameObject Liquor;
+    public GameObject Gallary;
 
     int x;
     int z;
@@ -33,8 +35,8 @@ public class Main_Cell : MonoBehaviour
     {
         set
         {
-            //rangeMesh = highlight.GetComponent<MeshRenderer>();
-            rangeMesh.material = movableColor;
+            rangeMesh = highlight.GetComponent<MeshRenderer>();
+            //rangeMesh.material = movableColor;
             highlight.SetActive(value);
             highlight.tag = "canMove";
         }
@@ -49,18 +51,43 @@ public class Main_Cell : MonoBehaviour
     {
         set
         {
-            //rangeMesh = highlight.GetComponent<MeshRenderer>();
-            rangeMesh.material = attackableColor;
+            ////rangeMesh = highlight.GetComponent<MeshRenderer>();
+            //rangeMesh.material = attackableColor;
             highlight.SetActive(value);
             highlight.tag = "Untagged";
             if (!IsAttackable)
             {
-                rangeMesh.material = movableColor;
+                //rangeMesh.material = movableColor;
                 highlight.tag = "canMove";
             }
-
         }
-        get { return highlight.activeSelf; }
+        get { return highlight.activeSelf;}
+    }
+
+    // お酒があるかどうか
+    public bool IsLiquor
+    {
+        set
+        {
+            Liquor.SetActive(value);
+        }
+        get
+        {
+            return Liquor.activeSelf;
+        }
+    }
+
+    // ギャラリーがいるかどうか
+    public bool IsGallary
+    {
+        set
+        {
+            Gallary.SetActive(value);
+        }
+        get
+        {
+            return Gallary.activeSelf;
+        }
     }
 
     // マスの移動コスト
@@ -86,7 +113,7 @@ public class Main_Cell : MonoBehaviour
 
     void Start()
     {
-        rangeMesh = highlight.GetComponent<MeshRenderer>();
+        //rangeMesh = highlight.GetComponent<MeshRenderer>();
     }
 
     void Update()

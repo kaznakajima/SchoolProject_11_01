@@ -32,28 +32,33 @@ public class Main_AI : MonoBehaviour
         var OwnUnits = map.GetOwnUnits().OrderByDescending(x => x.Life);
         var enemyUnits = map.GetEnemyUnits();
 
-        if (OwnUnits.Min(owUnit => enemyUnits.Min(enUnit => Mathf.Abs(owUnit.x - enUnit.x) + Mathf.Abs(owUnit.z - enUnit.z))) <= 2)
-        {
-            // 敵ユニット(プレイヤー)が隣接していたなら攻撃
-            foreach (var unit in OwnUnits)
-            {
-                map.HighlightAttackableCells(unit.x, unit.z, unit.attackRangeMin, unit.attackRangeMax);
-                unit.IsFocused = !unit.IsFocused;
-                unit.IsMoved = true;
-                // ユニット選択
-                unit.OnClick();
-                yield return AttackIfPossibleCoroutine(unit);
-            }
-        }
-        else if (OwnUnits.Min(owUnit => enemyUnits.Min(enUnit => Mathf.Abs(owUnit.x - enUnit.x) + Mathf.Abs(owUnit.z - enUnit.z))) <= distance)
+        // 敵ユニットとの距離を計算
+        if (OwnUnits.Min(owUnit => enemyUnits.Min(enUnit => Mathf.Abs(owUnit.x - enUnit.x) + Mathf.Abs(owUnit.z - enUnit.z))) <= distance)
         {
             // 敵ユニット(プレイヤー)が指定距離以内に入ったら行動開始
-            foreach(var unit in OwnUnits)
+            foreach (var unit in OwnUnits)
             {
-                yield return MoveAndAttackCoroutne(unit); 
+                unit.OnClick();
+
+                foreach (var eUnit in enemyUnits)
+                {
+                    if (Mathf.Abs(unit.x - eUnit.x) + Mathf.Abs(unit.z - eUnit.z) <= 3)
+                    {
+                        // 敵ユニット(プレイヤー)が隣接していたなら攻撃
+                        if (map.GetCell(eUnit.x, eUnit.z).IsAttackable == true)
+                        {
+                            unit.isMoved = true;
+                            map.GetUnit(eUnit.x, eUnit.z).OnClick();
+                            yield return WaitMoveCoroutine(unit, map.GetCell(unit.x, unit.z));
+                        }
+                    }
+                }
+
+                yield return MoveAndAttackCoroutne(unit);
             }
         }
-            yield return new WaitForSeconds(0.5f);
+
+        yield return new WaitForSeconds(0.5f);
         // 全ての動作が完了したらターン終了
         map.NextTurn();
     }
@@ -65,6 +70,7 @@ public class Main_AI : MonoBehaviour
         var moveCosts = map.GetMoveCostToAllCells(unit.Cell);
 
         var attackBaseCells = GetAttackBaseCells(unit).ToList();
+
         if(attackBaseCells.Count() == 0)
         {
             // 攻撃可能なマスがないなら行動終了
@@ -75,13 +81,16 @@ public class Main_AI : MonoBehaviour
         }
 
         // 攻撃可能なマスのうち、1番近い場所を目標地点にする
-        var TargetCell = attackBaseCells.OrderBy(cell => moveCosts.First(cost =>
-        {
-            return cost.coordinate.x == unit.Cell.X && cost.coordinate.z == unit.Cell.Z;
-        }).amount).First();
+        //var TargetCell = attackBaseCells.OrderBy(cell => moveCosts.First(cost =>
+        //{
+        //    return cost.coordinate.x == unit.Cell.X && cost.coordinate.z == unit.Cell.Z;
+        //}).amount).First();
+
+        var attackableCells = GetAttackBaseCells(unit);
+        var TargetCell = attackableCells[Random.Range(0, attackableCells.Length)];
 
         // ユニット選択
-        unit.OnClick();
+        //unit.OnClick();
 
         var route = map.CalcurateRouteCoordnatesAndMoveAmount(unit.Cell, TargetCell);
         var movableCells = map.GetMovableCells().ToList();
@@ -124,12 +133,19 @@ public class Main_AI : MonoBehaviour
     IEnumerator AttackIfPossibleCoroutine(Map_Unit unit)
     {
         var attackableCells = map.GetAttackableCells();
+
         if(0 < attackableCells.Length)
         {
             if (Random.Range(0, 100) < randomAttack)
             {
+                Debug.Log(attackableCells[Random.Range(0, attackableCells.Length)].transform.position);
+                var attackUnit = attackableCells[Random.Range(0, attackableCells.Length)];
                 // ランダムで対象を選ぶ
-                attackableCells[Random.Range(0, attackableCells.Length)].Unit.OnClick();
+                if (attackUnit.IsAttackable == true && attackUnit.Unit != null)
+                {
+                    attackUnit.Unit.OnClick();
+                }
+               // attackableCells[Random.Range(0, attackableCells.Length)].Unit.OnClick();
             }
             else
             {

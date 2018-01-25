@@ -17,7 +17,7 @@ public class BattleController : MonoBehaviour
         defender.Damage(attacker,defender);
         attacker.IsMoved = true;
 
-        yield return new WaitForSeconds(1.0f);
+        yield return new WaitForSeconds(0.5f);
 
         if(defender.Life <= 0)
         {

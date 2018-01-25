@@ -41,15 +41,15 @@ public class Main_SceneController : MonoBehaviour
         // GridLayoutによる自動レイアウトで、マスの座標が確定するのをまつ
         yield return null;
         // ユニット配置
-        map.PutUnit(2, 2, unitPrefab_S,Map_Unit.Team.Player1);
-        map.PutUnit(4, 2, unitPrefab_M,Map_Unit.Team.Player1);
-        map.PutUnit(6, 2, unitPrefab_T,Map_Unit.Team.Player1);
-        map.PutUnit(10, 10, unitPrefab_S, Map_Unit.Team.Player2);
-        map.PutUnit(12, 10, unitPrefab_M, Map_Unit.Team.Player2);
-        map.PutUnit(14, 10, unitPrefab_T, Map_Unit.Team.Player2);
+        map.PutUnit(2, 2, unitPrefab_M,Map_Unit.Team.Player1);
+        map.PutUnit(4, 2, unitPrefab_S, Map_Unit.Team.Player1);
+        map.PutUnit(6, 2, unitPrefab_T, Map_Unit.Team.Player1);
+        map.PutUnit(2, 6, unitPrefab_S, Map_Unit.Team.Player2);
+        map.PutUnit(4, 6, unitPrefab_M, Map_Unit.Team.Player2);
+        map.PutUnit(6, 6, unitPrefab_T, Map_Unit.Team.Player2);
 
         // AI設定
-        map.SetAI(Map_Unit.Team.Player2, enemyAI);
+        //map.SetAI(Map_Unit.Team.Player2, enemyAI);
 
         // ターン開始
         map.StartTurn(Map_Unit.Team.Player1);
@@ -58,29 +58,6 @@ public class Main_SceneController : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
     {
-        if (Input.GetMouseButtonDown(0))
-        {
-            rayHit = false;
-
-            // ワールド座標をスクリーン座標に変換
-            mousePos = Vector3.zero;
-
-            // マウスの位置からRayを飛ばす
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit = new RaycastHit();
-            if (Physics.Raycast(ray, out hit))
-            {
-                // Rayが当たったオブジェクトの座標を取得
-                mousePos = hit.collider.gameObject.transform.position;
-
-                hitObj = hit.collider.gameObject;
-
-                rayHit = true;
-            }
-            if (hitObj.gameObject.tag == "Player")
-            {
-                hitObj.GetComponent<Map_Unit>().OnClick();
-            }
-        }
+        
     }
 }
