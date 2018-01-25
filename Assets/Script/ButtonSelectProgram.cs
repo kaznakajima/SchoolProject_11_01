@@ -8,9 +8,8 @@ public class ButtonSelectProgram : MonoBehaviour
     TutorialSlide ts;//スライドスクリプトの読み込み
     SceneFader sf;//フェードスクリプトの読み込み
     public Image[] ButtonImage;//ボタンのイメージを保存する
-
     Color unselectedColor = Color.white;//非選択色
-    Color selectColor = new Color(255.0f/255.0f, 127 / 255.0f, 127 / 255.0f, 255 / 255.0f);//選択色
+    Color selectColor = new Color(255.0f / 255.0f, 127 / 255.0f, 127 / 255.0f, 255 / 255.0f);//選択色
 
     bool isButtonChange;//選択ボタンの変更中かどうか
 
@@ -18,6 +17,10 @@ public class ButtonSelectProgram : MonoBehaviour
     float speed = 1;//コントローラーのアナログスティックの入力速度
     int buttonNum;//選択中のボタンが何番目なのか保存する
     int oldButtonNum;//ひとつ前に選択していたボタンを保存する
+
+    public string thisSceneName;
+
+    public SeProgram seProgram;//SEの設定
 
     void Start()
     {
@@ -76,7 +79,7 @@ public class ButtonSelectProgram : MonoBehaviour
         isButtonChange = true;//ボタンの色を変更開始
         float seconds = 0.25f;//0.25秒で色を変える
         float t = 0;//時間をリセット
-        
+
         //設定した時間になるまで色を変化させる
         while (t < 1)
         {
@@ -85,7 +88,7 @@ public class ButtonSelectProgram : MonoBehaviour
             //前のボタンを非選択色にする
             ButtonImage[oldButtonNum].color = Color.Lerp(selectColor, unselectedColor, t);
             //時間経過
-            t += Time.deltaTime/seconds;
+            t += Time.deltaTime / seconds;
 
             yield return null;
         }
@@ -97,20 +100,55 @@ public class ButtonSelectProgram : MonoBehaviour
     /// </summary>
     void ButtonSelector()
     {
-        switch (buttonNum)
+        seProgram.SEPlay(0);//太鼓
+        switch (thisSceneName)
         {
-            case 0:
-                sf.StageSelect("Title");//フェードメソッドの呼び出し
+            case "Title":
+                switch (buttonNum)
+                {
+                    case 0:
+                        sf.StageSelect("Tutorial");//フェードメソッドの呼び出し
+                        break;
+                    case 1:
+                        sf.StageSelect("Tutorial");//フェードメソッドの呼び出し
+                        break;
+                    case 2:
+                        sf.StageSelect("Game");//フェードメソッドの呼び出し
+                        break;
+                    case 3:
+                        sf.StageSelect("Game");//フェードメソッドの呼び出し
+                        break;
+                }
                 break;
-            case 1:
-                ts.Slide(false);//簡易スライドメソッドの呼び出し
+            case "Tutorial":
+                switch (buttonNum)
+                {
+                    case 0:
+                        sf.StageSelect("Title");//フェードメソッドの呼び出し
+                        break;
+                    case 1:
+                        ts.Slide(true);//簡易スライドメソッドの呼び出し
+                        break;
+                    case 2:
+                        ts.Slide(false);
+                        break;
+                    case 3:
+                        sf.StageSelect("Game");//フェードメソッドの呼び出し
+                        break;
+                }
                 break;
-            case 2:
-                ts.Slide(true);
-                break;
-            case 3:
-                sf.StageSelect("Game");//フェードメソッドの呼び出し
+            case "Game":
+                switch (buttonNum)
+                {
+                    case 0:
+                        sf.StageSelect("Game");//フェードメソッドの呼び出し
+                        break;
+                    case 1:
+                        sf.StageSelect("Title");//フェードメソッドの呼び出し
+                        break;
+                }
                 break;
         }
+
     }
 }

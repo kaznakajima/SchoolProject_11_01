@@ -9,18 +9,43 @@ public class SeProgram : MonoBehaviour {
 
     public AudioSource SE;
     
-
-
     public enum SEType
     {
         //[0]
-        ClickSE,
+        ButtonSE,
 
         //[1]
-        FillSE,
+        StartSE,
+
+        //[2]
+        Turn_ChengeSE,
 
         //[3]
-        StartSE
+        Mikoshi_WalkSE,
+
+        //[4]
+        Mikoshi_AttackSE,
+
+        //[5]
+        Mikoshi_DamegeSE,
+
+        //[6]
+        Unit_WalkSE,
+
+        //[7]
+        Unit_AttackSE,
+
+        //[8]
+        Unit_DamegeSE,
+
+        //[9]
+        Item_GetSE,
+
+        //[10]
+        Gage_UpSE,
+
+        //[11]
+        Game_SetSE
     }
     void Awake()
     {
