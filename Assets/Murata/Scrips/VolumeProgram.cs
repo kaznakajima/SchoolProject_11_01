@@ -9,7 +9,7 @@ public class VolumeProgram : MonoBehaviour {
     public static bool SlideMove = false;//スライダーの移動
 
     [SerializeField]
-    Slider VolumeSlider;//スライダー本体
+    GameObject VolumeSlider;//スライダー本体
     [SerializeField]
     GameObject VolumeSliderEnd;//スライダーの移動終了場所
 
